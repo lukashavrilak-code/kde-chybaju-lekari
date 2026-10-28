@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: zakazane-cesty
+        name: Surové dáta, snapshoty, cache, databáza, lokálny config a build sa necommitujú
+        entry: Súbory z data/raw, data/local, data/snapshots, data/cache, site, build a config.local.toml nepatria do Gitu.
+        language: fail
+        files: ^(data/raw|data/local|data/snapshots|data/cache|site|build)/|^config\.local\.toml$
+      - id: kontrola-repozitara
+        name: Kontrola repozitára (veľké súbory, zakázané vzory v JS)
+        entry: python scripts/check_repo.py --staged
+        language: python
+        pass_filenames: false

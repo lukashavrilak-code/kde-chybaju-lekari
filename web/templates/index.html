@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="static/vendor/leaflet-1.9.4/leaflet.css" integrity="{{ leaflet_css_sri }}">
+{% endblock %}
+{% block main_class %}obsah obsah-mapa{% endblock %}
+{% block main %}
+<h1 class="skryte">Mapa dostupnosti lekárov prvého kontaktu</h1>
+<div class="ovladanie">
+{% if typy|length > 1 %}
+  <fieldset class="prepinac">
+    <legend>Zobraziť</legend>
+{% for typ in typy %}
+    <label><input type="radio" name="typ" value="{{ typ }}"{% if loop.first %} checked{% endif %}> {{ "Lekári pre dospelých" if typ == "VLD" else "Pediatri" }}</label>
+{% endfor %}
+  </fieldset>
+{% else %}
+  <p class="poznamka">Zobrazujeme ambulancie všeobecných lekárov pre dospelých. Pediatrov doplníme po overení kódu odbornosti v registri.</p>
+{% endif %}
+  <div class="hladanie">
+    <label for="hladat">Vyhľadať obec</label>
+    <input id="hladat" type="search" autocomplete="off" spellcheck="false" placeholder="napr. Rožňava"
+           role="combobox" aria-expanded="false" aria-controls="navrhy" aria-autocomplete="list">
+    <ul id="navrhy" class="navrhy" role="listbox" aria-label="Návrhy obcí" hidden></ul>
+  </div>
+</div>
+<div class="mapa-rozlozenie">
+  <div class="mapa-stlpec">
+    <div id="mapa" class="mapa" role="region" aria-label="Mapa okresov Slovenska"></div>
+    <div id="legenda" class="legenda"></div>
+  </div>
+  <aside id="panel" class="panel" aria-live="polite">
+    <h2>Ako čítať mapu</h2>
+    <p>Farba okresu ukazuje počet ambulancií všeobecných lekárov na 10&nbsp;000 obyvateľov príslušnej vekovej skupiny. Tmavšia farba znamená menej ambulancií.</p>
+    <p>Kliknite na okres alebo vyhľadajte obec. Pre obec ukážeme vzdialenosť k najbližšej ambulancii a zoznam ambulancií v okolí.</p>
+  </aside>
+</div>
+<noscript><p class="noscript">Mapa potrebuje JavaScript. Poradie okresov nájdete aj bez neho na stránke <a href="rebricky.html">Rebríčky</a>.</p></noscript>
+{% endblock %}
+{% block scripts %}
+<script src="static/vendor/leaflet-1.9.4/leaflet.js" integrity="{{ leaflet_js_sri }}"></script>
+<script type="module" src="static/js/app.js"></script>
+{% endblock %}

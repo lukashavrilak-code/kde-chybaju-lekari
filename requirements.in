@@ -1,0 +1,11 @@
+defusedxml
+geopandas
+jinja2
+markdown
+numpy
+openpyxl
+pandas
+pyogrio
+pyproj
+requests
+shapely

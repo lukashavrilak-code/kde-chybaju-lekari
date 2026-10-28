@@ -1,0 +1,157 @@
+[projekt]
+nazov = "Kde na Slovensku chýbajú lekári prvého kontaktu?"
+prevadzkovatel = ""
+kontakt_email = ""
+web_url = ""
+repozitar_url = ""
+
+[cesty]
+raw = "data/raw"
+local = "data/local"
+manual = "data/manual"
+cache = "data/cache"
+history = "data/history"
+snapshots = "data/snapshots"
+site = "site"
+
+[register]
+stranka = "https://www.udzs-sk.sk/urad/kody-poskytovatelov-zdravotnej-starostlivosti-a-zdravotnickych-pracovnikov/"
+vzor_odkazu = 'VyberKpWeb_(\d{1,2})\.(\d{1,2})\.(\d{4})\.xlsx$'
+url = "https://www.udzs-sk.sk/wp-content/uploads/2026/10/VyberKpWeb_1.10.2026.xlsx"
+povolene_domeny = ["www.udzs-sk.sk", "udzs-sk.sk"]
+max_stranka_mb = 5
+min_kb = 100
+max_mb = 50
+max_rozbalene_mb = 300
+max_poloziek_zip = 200
+max_dlzka_textu = 300
+
+[register.stlpce]
+ico = "ico"
+pzs_kod = "pzs_kod"
+nazov = "nazov_pzs"
+obec_sidlo = "Obec"
+psc_sidlo = "PSC"
+ulica = "Ulica cislo OU"
+obec = "Obec OU"
+psc = "PSC OU"
+platnost_od = "Platnost_od"
+platnost_do = "Platnost_do"
+
+[odbornosti]
+VLD = "020"
+VLDD = "008"
+
+[druh_cinnosti]
+pozicia_10 = ["2"]
+
+[zverejnit]
+VLD = true
+VLDD = true
+
+[hranice]
+subor = "data/raw/zbgis/USJ_hranice_0.gpkg"
+vrstva = "obec_0"
+epsg = 5514
+zjednodusenie_okresy_m = 250
+desatinne_miesta_okresy = 3
+
+[hranice.stlpce]
+obec_kod = "IDN4"
+obec_nazov = "NM4"
+okres_kod = "IDN3"
+okres_nazov = "NM3"
+kraj_kod = "IDN2"
+kraj_nazov = "NM2"
+
+[obyvatelia]
+zdroj = "Štatistický úrad SR – STATdata, tabuľka om7006rr"
+atribucia = "Zdroj: Štatistický úrad SR, CC BY 4.0, www.statistics.sk"
+subor_deti = "data/raw/statdata/om7006rr_0-17.csv"
+subor_dospeli = "data/raw/statdata/om7006rr_18plus.csv"
+rok = "2025"
+stav_k = "2025-06-30"
+popis = "stredný stav 2025"
+kontrola_deti_sr = 1020767
+kontrola_spolu_sr = 5414429
+
+[nczi]
+url = "https://data.nczisk.sk/statisticke_vystupy/Rocne_statisticke_zistovania/vystup_S01_2024_T2.xlsx"
+povolene_domeny = ["data.nczisk.sk"]
+rok = "2024"
+referencny_datum = "2024-12-31"
+riadok = "ambulancia_výstup"
+stlpec = "Počet útvarov"
+harky = { T2 = "SR", T2_1 = "1", T2_2 = "2", T2_3 = "3", T2_4 = "4", T2_5 = "5", T2_6 = "6", T2_7 = "7", T2_8 = "8" }
+kontrola_sr = { VLD = 1891, VLDD = 885 }
+pomer_min = 0.8
+pomer_max = 1.6
+
+[nominatim]
+url = "https://nominatim.openstreetmap.org/search"
+interval_s = 1.1
+timeout_s = 30
+pokusy = 4
+cakanie_po_chybe_s = 30
+tolerancia_obce_km = 0.3
+varianty = true
+odstranit_predpony = ["ul.", "ulica", "ZS", "Zdravotné stredisko"]
+
+[vypocty]
+polomery_km = [10, 20]
+max_zoznam_km = 20
+
+[ocakavane]
+okresy = 79
+kraje = 8
+
+[validacia]
+max_zlych_kodov = 0.001
+max_zlych_datumov = 0.001
+zmena_riadkov = 0.10
+rozsah_odbornosti = 0.20
+max_zmena_plochy = 0.01
+max_adries_na_bode = 5
+min_podiel_presnych = 0.0
+zmena_sr_warn = 0.05
+zmena_sr_fail = 0.15
+zmena_okres_min = 3
+zmena_okres_podiel = 0.25
+odlahla_hodnota_nasobok = 3.0
+
+[validacia.ocakavane_pocty]
+VLD = 2435
+VLDD = 1100
+
+[legenda]
+VLD = [4.0, 5.0, 6.0, 7.0]
+VLDD = [8.0, 10.0, 12.0, 14.0]
+vzdialenost_km = [2.0, 5.0, 10.0, 15.0]
+
+[web]
+zastarane_po_dnoch = 60
+tile_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+
+[[web.poistovne]]
+nazov = "VšZP"
+url = "https://www.vszp.sk/zoznam-zmluvnych-lekarov/"
+
+[[web.poistovne]]
+nazov = "Dôvera"
+url = "https://poskytovatelia.dovera.sk/vyhladavanie"
+
+[[web.poistovne]]
+nazov = "Union"
+url = "https://portal.unionzp.sk/pub/zmluvni-lekari-pzs"
+
+[zaloha]
+ciel = ""
+polozky = ["data/cache", "data/snapshots", "data/raw/statdata", "data/raw/nczi",
+           "data/local/blocklist.csv", "data/local/ziadosti_log.csv", "config.local.toml"]
+
+[limity_kb]
+"data/meta.json" = 5
+"data/okresy.geojson" = 250
+"data/obce.json" = 700
+"data/ambulancie.json" = 700
+prve_nacitanie = 550

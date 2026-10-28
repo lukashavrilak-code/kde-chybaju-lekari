@@ -1,0 +1,7 @@
+[tool.ruff]
+line-length = 130
+target-version = "py313"
+extend-exclude = ["web"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,197 @@
+:root {
+  color-scheme: light;
+  --plocha: #f9f9f7;
+  --povrch: #fcfcfb;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --okraj: rgba(11, 11, 11, 0.12);
+  --linka: #e1e0d9;
+  --odkaz: #1c5cab;
+  --zvyraznenie: #f0efec;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--plocha);
+}
+
+a { color: var(--odkaz); }
+
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible, li:focus-visible {
+  outline: 3px solid #2a78d6;
+  outline-offset: 2px;
+}
+
+h1 { font-size: 1.6rem; line-height: 1.25; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.05rem; }
+
+.preskocit { position: absolute; left: -9999px; }
+.preskocit:focus { left: 16px; top: 8px; z-index: 2000; padding: 8px 12px; background: var(--povrch); }
+
+.skryte {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.hlavicka {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 12px 16px;
+  background: var(--povrch);
+  border-bottom: 1px solid var(--okraj);
+}
+
+.nazov-webu { font-weight: 700; font-size: 1.05rem; color: var(--text); text-decoration: none; }
+
+.menu { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; }
+.menu a { padding: 4px 0; text-decoration: none; }
+.menu a[aria-current="page"] { color: var(--text); font-weight: 600; border-bottom: 2px solid var(--text); }
+
+.upozornenie {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  color: var(--text-2);
+  background: var(--zvyraznenie);
+  border-bottom: 1px solid var(--okraj);
+}
+.upozornenie strong { color: var(--text); }
+
+.zastarane {
+  padding: 8px 16px;
+  font-weight: 600;
+  background: var(--povrch);
+  border-bottom: 1px solid var(--okraj);
+  border-left: 6px solid var(--text-2);
+}
+
+.obsah { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.obsah-mapa { max-width: 1400px; }
+
+.ovladanie { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; margin-bottom: 12px; }
+
+.prepinac { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 6px 12px; border: 1px solid var(--okraj); border-radius: 8px; }
+.prepinac legend { padding: 0 4px; font-size: 0.85rem; color: var(--text-2); }
+.prepinac label { cursor: pointer; }
+
+.hladanie { position: relative; flex: 1 1 260px; max-width: 420px; }
+.hladanie label { display: block; font-size: 0.85rem; color: var(--text-2); }
+.hladanie input {
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  border: 1px solid #c3c2b7;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.navrhy {
+  position: absolute;
+  z-index: 1000;
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  margin: 2px 0 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #c3c2b7;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+.navrhy li { padding: 8px 10px; cursor: pointer; }
+.navrhy li[aria-selected="true"], .navrhy li:hover { background: var(--zvyraznenie); }
+.navrhy .okres { margin-left: 6px; font-size: 0.85rem; color: var(--text-2); }
+
+.mapa-rozlozenie { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 16px; }
+
+.mapa {
+  height: 70vh;
+  min-height: 420px;
+  background: #eceae4;
+  border: 1px solid var(--okraj);
+  border-radius: 8px;
+}
+
+.legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 8px; font-size: 0.85rem; color: var(--text-2); }
+.legenda .titulok { width: 100%; font-weight: 600; color: var(--text); }
+.legenda .polozka { display: inline-flex; align-items: center; gap: 6px; }
+.legenda .vzorka { display: inline-block; width: 16px; height: 16px; border: 1px solid rgba(11, 11, 11, 0.15); border-radius: 3px; }
+
+.panel {
+  max-height: calc(70vh + 60px);
+  padding: 12px 16px;
+  overflow-y: auto;
+  background: var(--povrch);
+  border: 1px solid var(--okraj);
+  border-radius: 8px;
+}
+.panel h2 { margin-top: 0; }
+
+.suhrn { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 8px 0 12px; }
+.suhrn dt { color: var(--text-2); }
+.suhrn dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+
+.karta { margin: 8px 0; padding: 10px 12px; background: #fff; border: 1px solid var(--okraj); border-radius: 8px; }
+.karta.aktivna { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
+.karta h3 { margin: 0 0 4px; font-size: 1rem; overflow-wrap: anywhere; }
+.karta p { margin: 2px 0; font-size: 0.92rem; }
+.karta .tlmene { color: var(--text-2); }
+.karta details { margin-top: 4px; }
+.karta summary { color: var(--odkaz); cursor: pointer; }
+.karta .poistovne { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 0; padding: 0; list-style: none; }
+
+.tlacidlo {
+  padding: 6px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--zvyraznenie);
+  border: 1px solid #c3c2b7;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tabulka { width: 100%; margin: 8px 0 16px; font-size: 0.95rem; border-collapse: collapse; background: var(--povrch); }
+.tabulka caption { padding: 4px 0; font-weight: 600; text-align: left; }
+.tabulka th, .tabulka td { padding: 6px 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--linka); }
+.tabulka .cislo { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tabulka th.cislo { white-space: normal; }
+
+.dve-tabulky { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+
+.text { max-width: 760px; }
+.poznamka { font-size: 0.9rem; color: var(--text-2); }
+.noscript { padding: 12px; background: var(--povrch); border: 1px solid var(--okraj); }
+
+.paticka {
+  max-width: 1400px;
+  margin: 24px auto 0;
+  padding: 16px;
+  font-size: 0.85rem;
+  color: var(--text-2);
+  border-top: 1px solid var(--okraj);
+}
+
+.leaflet-tooltip .tooltip-nazov { font-weight: 600; }
+
+@media (max-width: 800px) {
+  .mapa-rozlozenie { grid-template-columns: minmax(0, 1fr); }
+  .mapa { height: 55vh; min-height: 320px; }
+  .panel { max-height: none; }
+  .tabulka { font-size: 0.85rem; }
+  .tabulka th, .tabulka td { padding: 5px 4px; }
+}

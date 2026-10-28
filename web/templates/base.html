@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="{{ csp }}">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="Neoficiálna analýza verejných dát: dostupnosť všeobecných lekárov a pediatrov prvého kontaktu v okresoch a obciach Slovenska.">
+<title>{% block title %}{% endblock %}{{ projekt.nazov }}</title>
+<link rel="stylesheet" href="static/css/style.css">
+{% block head %}{% endblock %}
+</head>
+<body>
+<a class="preskocit" href="#obsah">Preskočiť na obsah</a>
+<header class="hlavicka">
+  <a class="nazov-webu" href="index.html">{{ projekt.nazov }}</a>
+  <nav aria-label="Hlavné menu">
+    <ul class="menu">
+{% for subor, nazov in [("index.html", "Mapa"), ("rebricky.html", "Rebríčky"), ("data.html", "Dáta"), ("metodika.html", "Metodika"), ("sukromie.html", "Súkromie a kontakt")] %}
+      <li><a href="{{ subor }}"{% if stranka == subor %} aria-current="page"{% endif %}>{{ nazov }}</a></li>
+{% endfor %}
+    </ul>
+  </nav>
+</header>
+<div class="upozornenie" data-upozornenie>
+  <strong>Neoficiálna analýza verejných dát, stav k {{ stav_registra_text }}.</strong>
+  Nie je to oficiálna stránka ÚDZS, NCZI, MZ SR ani zdravotných poisťovní. <a href="metodika.html">Ako sme počítali</a>
+</div>
+<div class="zastarane" id="zastarane" hidden>Údaje môžu byť zastarané: register je k {{ stav_registra_text }}.</div>
+<main id="obsah" class="{% block main_class %}obsah{% endblock %}">
+{% block main %}{% endblock %}
+</main>
+<footer class="paticka" data-atribucie>
+  <p>Zdroje: ÚDZS – Kódy poskytovateľov zdravotnej starostlivosti (stav k {{ stav_registra_text }}) · ÚGKK SR – ZBGIS, hranice obcí (CC BY 4.0, zjednodušené) · mapa a geokódovanie © OpenStreetMap contributors (ODbL).</p>
+  <p>Počty obyvateľov ({{ popis_obyvatelstva }}) – {{ atribucia_obyvatelia }}</p>
+  <p>Verzia pipeline {{ verzia }} · <a href="sukromie.html">Ochrana súkromia a kontakt</a>{% if projekt.repozitar_url %} · <a href="{{ projekt.repozitar_url }}">Zdrojový kód</a>{% endif %}</p>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

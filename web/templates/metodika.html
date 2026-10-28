@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Metodika – {% endblock %}
+{% block main %}
+<article class="text">
+{{ metodika_html|safe }}
+<p id="kontakt-oprava"><strong>Projektový e-mail na opravu alebo odstránenie záznamu:</strong> {% if projekt.kontakt_email %}<a href="mailto:{{ projekt.kontakt_email }}">{{ projekt.kontakt_email }}</a>{% else %}[DOPLŇ PROJEKTOVÝ E-MAIL]{% endif %}</p>
+<h2 id="aktualne">Aktuálny stav dát</h2>
+<p>Register ÚDZS k {{ stav_registra_text }}, obyvatelia: {{ popis_obyvatelstva }}, verzia pipeline {{ verzia }}.</p>
+<table class="tabulka">
+  <thead><tr><th scope="col">Údaj</th><th scope="col" class="cislo">Hodnota</th></tr></thead>
+  <tbody>
+{% for typ in typy %}
+    <tr><td>Ambulancie: {{ nazvy_typov[typ]|lower }}</td><td class="cislo">{{ pocty[typ]|cislo }}</td></tr>
+    <tr><td>Pracoviská (<a href="#u6">U6</a>): {{ nazvy_typov[typ]|lower }}</td><td class="cislo">{{ pracoviska[typ]|cislo }}</td></tr>
+{% endfor %}
+    <tr><td>Záznamy skryté na žiadosť</td><td class="cislo">{{ vylucene|cislo }}</td></tr>
+{% for presnost, podiel in presnost.items() %}
+    <tr><td>Poloha s presnosťou „{{ {"adresa": "adresa", "ulica": "ulica", "obec": "iba obec", "rucne": "ručne overená"}[presnost] }}“</td><td class="cislo">{{ podiel|percento }}</td></tr>
+{% endfor %}
+    <tr><td>Kontroly kvality: OK / upozornenia / chyby</td><td class="cislo">{{ validacia.OK }} / {{ validacia.WARN }} / {{ validacia.FAIL }}</td></tr>
+  </tbody>
+</table>
+{% if nczi %}
+<h3>Porovnanie s tabuľkami NCZI</h3>
+<table class="tabulka">
+  <thead><tr><th scope="col">Typ</th><th scope="col">Kraj</th><th scope="col" class="cislo">Register</th><th scope="col" class="cislo">NCZI {{ nczi[0].rok }} (počet útvarov)</th><th scope="col" class="cislo">Pomer</th></tr></thead>
+  <tbody>
+{% for r in nczi %}
+    <tr><td>{{ r.typ }}</td><td>{{ r.kraj }}</td><td class="cislo">{{ r.register|cislo }}</td><td class="cislo">{{ r.nczi|cislo }}</td><td class="cislo">{% if r.pomer is not none %}{{ r.pomer|cislo(2) }}{% else %}–{% endif %}</td></tr>
+{% endfor %}
+  </tbody>
+</table>
+<p class="poznamka">NCZI uvádza stav k 31. 12. {{ nczi[0].rok }}, register je k {{ stav_registra_text }}. Kraj ambulancie určujeme podľa adresy v registri. Porovnanie je iba kontrola a nikdy neblokuje zverejnenie. Rozdiel vysvetľujeme v časti <a href="#nczi">Porovnanie s NCZI</a>.</p>
+{% endif %}
+</article>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Rebríčky okresov – {% endblock %}
+{% macro tabulka(riadky, typ, popis, pracoviska=false) %}
+<table class="tabulka">
+  <caption>{{ popis }}</caption>
+  <thead>
+    <tr><th scope="col">Poradie</th><th scope="col">Okres</th><th scope="col">Kraj</th><th scope="col" class="cislo">Ambulancie</th>{% if pracoviska %}<th scope="col" class="cislo"><a href="metodika.html#u6">Pracoviská</a></th>{% endif %}<th scope="col" class="cislo">Na 10&nbsp;000 {{ menovatele[typ] }}</th></tr>
+  </thead>
+  <tbody>
+{% for r in riadky %}
+    <tr><td>{{ r.poradie }}.</td><td>{{ r.nazov }}</td><td>{{ r.kraj }}</td><td class="cislo">{{ r.pocet|cislo }}</td>{% if pracoviska %}<td class="cislo">{{ r.pracoviska|cislo }}</td>{% endif %}<td class="cislo">{{ r.na_10k|cislo(2) }}</td></tr>
+{% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+{% block main %}
+<h1>Rebríčky okresov</h1>
+<p>Okresy sú zoradené podľa počtu ambulancií na 10&nbsp;000 obyvateľov príslušnej vekovej skupiny. Prvé miesto znamená najmenej ambulancií, teda najhoršiu dostupnosť. <a href="metodika.html#u2">Definícia ukazovateľa</a></p>
+{% for typ in typy %}
+<section class="rebricek">
+  <h2>{{ nazvy_typov[typ] }}</h2>
+  <div class="dve-tabulky">
+    {{ tabulka(rebricky[typ].najhorsie, typ, "Najmenej ambulancií") }}
+    {{ tabulka(rebricky[typ].najlepsie, typ, "Najviac ambulancií") }}
+  </div>
+  <details>
+    <summary>Celé poradie ({{ rebricky[typ].vsetky|length }} okresov)</summary>
+    {{ tabulka(rebricky[typ].vsetky, typ, "Všetky okresy", pracoviska=true) }}
+  </details>
+</section>
+{% endfor %}
+<section class="obmedzenia">
+  <h2>Na čo pri čítaní dávať pozor</h2>
+  <ul>
+    <li>Počítame ambulancie v registri, nie lekárov ani ich úväzky. Register neuvádza, či ambulancia prijíma nových pacientov.</li>
+    <li>V malých okresoch zmení jedna ambulancia hodnotu výrazne.</li>
+    <li>Ľudia chodia k lekárovi aj do susedného okresu, najmä do miest. Mestské okresy (napr. Bratislava, Košice) preto môžu vychádzať lepšie, než zodpovedá ich vlastnému obyvateľstvu.</li>
+  </ul>
+  <p><a href="metodika.html">Všetky obmedzenia v metodike</a></p>
+</section>
+{% endblock %}

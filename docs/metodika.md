@@ -1,0 +1,156 @@
+# Metodika
+
+Táto stránka je **neoficiálna analýza verejných dát**. Ukazuje, kde sú ambulancie všeobecných lekárov pre dospelých a pediatrov prvého kontaktu **evidované v registri** Úradu pre dohľad nad zdravotnou starostlivosťou (ÚDZS). Ako ďaleko sú od obcí a koľko ich pripadá na obyvateľov okresu.
+
+Stránka **neukazuje**, či ambulancia prijíma nových pacientov, aké má ordinačné hodiny, koľko v nej pracuje lekárov ani aké sú čakacie doby. Tieto údaje register neobsahuje. Kontakt a ordinačné hodiny overte vo vyhľadávaní lekárov svojej zdravotnej poisťovne.
+
+## Zdroje dát
+
+| Zdroj | Čo z neho používame | Licencia |
+|---|---|---|
+| ÚDZS – Kódy poskytovateľov zdravotnej starostlivosti (XLSX) | názov poskytovateľa, odbornosť z kódu, adresa ambulancie, platnosť záznamu | licencia nie je uvedená |
+| Štatistický úrad SR – STATdata, tabuľka om7006rr | počet obyvateľov obcí vo veku 0 – 17 a 18+ (menovateľ) | CC BY 4.0, „Zdroj: Štatistický úrad SR, CC BY 4.0, www.statistics.sk“ |
+| ÚGKK SR – ZBGIS | hranice obcí a okresov | CC BY 4.0, hranice sú pre web zjednodušené |
+| OpenStreetMap – Nominatim | poloha (súradnice) adries ambulancií | © OpenStreetMap contributors, ODbL |
+| NCZI – výstup S01 o sieti poskytovateľov (tabuľky T2) | iba kontrola našich počtov po krajoch | citujeme zdroj |
+
+Dátum stavu registra a obyvateľstva je uvedený na každej stránke a v časti [Aktuálny stav dát](#aktualne).
+
+## Výber ambulancií
+
+- Každá ambulancia má v registri 12-znakový kód poskytovateľa zdravotnej starostlivosti. Znaky 7 až 9 označujú odborné zameranie podľa číselníka NCZI „Odborné zameranie v zariadení“ (OID 1.3.158.00165387.100.10.39).
+- **VLD** – všeobecný lekár pre dospelých: kód **020** (všeobecné lekárstvo).
+- **VLDD** – pediater prvého kontaktu: kód **008** (všeobecná starostlivosť o deti a dorast). Kód 007 (pediatria) je odborná pediatrická ambulancia a nezapočítavame ho.
+- Znak 10 označuje druh odbornej činnosti podľa číselníka NCZI „Typ odbornej činnosti“ (OID 1.3.158.00165387.100.10.37). Započítavame iba druh **2 – ambulancia**. Iné druhy, napríklad stacionár, nezapočítavame.
+- Započítavame iba záznamy platné k dátumu stavu registra: platnosť sa začala najneskôr v tento deň a neskončila pred ním.
+- Ak je ten istý kód v registri viackrát, ponecháme záznam s najneskorším začiatkom platnosti.
+- Na žiadosť dotknutej osoby môžeme záznam vylúčiť. Vtedy sa nepoužije nikde, ani v súhrnných počtoch. Počet takých záznamov uvádzame v časti [Aktuálny stav dát](#aktualne).
+
+## Ukazovatele
+
+<a id="u1"></a>
+
+### U1 – Počet ambulancií v okrese
+
+Počet ambulancií daného typu, ktorých poloha leží v okrese. Ambulancia je jeden kód v registri. Nie je to jeden lekár ani jeden úväzok: jeden lekár môže mať viac ambulancií a v jednej ambulancii môže pracovať viac lekárov.
+
+<a id="u2"></a>
+
+### U2 – Ambulancie na 10 000 obyvateľov (okres)
+
+**U2 = U1 / menovateľ × 10 000**, zaokrúhlené na dve desatinné miesta.
+
+- Menovateľ pre VLD: obyvatelia okresu vo veku 18 a viac rokov.
+- Menovateľ pre pediatrov: obyvatelia okresu vo veku 0 až 17 rokov. Rovnaké vekové skupiny (0 – 17 a 18+) používa aj NCZI pri prepočte lekárov na obyvateľov.
+- Počty obyvateľov sú zo STATdata Štatistického úradu SR (tabuľka om7006rr, pohlavie spolu, rok 2025). Je to **stredný (priemerný) stav obyvateľstva v roku 2025**, teda počet obyvateľov ku stredu roka. ŠÚ SR ho počíta ako priemer stavov na začiatku a na konci roka, preto majú niektoré obce polovičné hodnoty (napr. 171,5). Používame ich bez zaokrúhlenia. Dátum sa líši od dátumu registra.
+- Export STATdata neobsahuje kódy obcí. Obce spájame s hranicami ZBGIS podľa okresu a názvu obce. Spojí sa všetkých 2 927 obcí a súčet obcí sa rovná údaju za Slovensko.
+
+Obmedzenia: ľudia chodia k lekárovi aj mimo svojho okresu, najmä do miest. Mestské okresy preto môžu vychádzať lepšie, než zodpovedá ich vlastnému obyvateľstvu. V malých okresoch zmení jedna ambulancia hodnotu výrazne. Pre jednotlivé obce tento pomer nepočítame. Väčšina obcí vlastnú ambulanciu nemá a pri malom počte obyvateľov by pomer bol zavádzajúci.
+
+<a id="u3"></a>
+
+### U3 – Vzdialenosť k najbližšej ambulancii (obec)
+
+Vzdušná vzdialenosť v kilometroch z **referenčného bodu obce** k najbližšej ambulancii daného typu, aj v inom okrese. Referenčný bod je geometrický stred územia obce. Ak stred leží mimo územia, použijeme bod, ktorý zaručene leží vnútri.
+
+Vzdialenosť počítame vzorcom haversine na guli s polomerom 6 371 km. Na webe aj v Pythone používame rovnaký vzorec a rovnaké zaokrúhlené súradnice, aby sa čísla zhodovali.
+
+Obmedzenia: skutočná cesta autom alebo autobusom je dlhšia. Stred obce nemusí byť tam, kde ľudia bývajú, najmä pri rozľahlých obciach s osadami.
+
+<a id="u4"></a>
+
+### U4 – Počet ambulancií do 10 a do 20 km (obec)
+
+Počet ambulancií daného typu, ktorých vzdušná vzdialenosť od referenčného bodu obce je najviac 10 km, resp. 20 km. Pri hodnote „v obci“ počítame ambulancie, ktorých poloha leží na území obce.
+
+<a id="u5"></a>
+
+### U5 – Poradie okresov
+
+Okresy zoradené podľa U2 od najnižšej hodnoty. Prvé miesto znamená najmenej ambulancií na obyvateľa, teda najhoršiu dostupnosť. Rovnaké hodnoty majú rovnaké poradie.
+
+<a id="u6"></a>
+
+### U6 – Počet pracovísk v okrese (doplnkový)
+
+Počet rôznych **pracovísk** daného typu v okrese. Pracovisko je jedna dvojica IČO poskytovateľa a adresy ambulancie (ulica, obec a PSČ podľa registra). Ak má ten istý poskytovateľ na tej istej adrese viac kódov, počítame ich ako jedno pracovisko. Rovnaká adresa s iným IČO je iné pracovisko.
+
+Prečo ho uvádzame: v registri má niekedy jeden poskytovateľ na jednom mieste viac kódov, a preto je počet kódov (U1) vyšší než počet miest, kam pacient reálne chodí. Hlavným ukazovateľom ostáva U1. Farby mapy aj rebríček sa počítajú z U2, ktorý vychádza z U1.
+
+Obmedzenia: adresu porovnávame tak, ako je zapísaná v registri. Rovnaká adresa napísaná inak (napr. iné poradie čísel) sa počíta ako dve pracoviská. Ani pracovisko nehovorí o počte lekárov ani o úväzkoch.
+
+## Poloha ambulancií
+
+Adresu ambulancie (miesto prevádzkovania podľa registra) prevádzame na súradnice cez službu OpenStreetMap Nominatim. Posielame jej iba adresu, nikdy názov poskytovateľa. Výsledky ukladáme a tú istú adresu sa nepýtame dvakrát.
+
+Obec z adresy hľadáme podľa názvu v ZBGIS. Pri názvoch „Bratislava“ a „Košice“ bez mestskej časti pripúšťame ktorúkoľvek mestskú časť. Miestne časti, ktoré nie sú obcou (napr. Tatranská Lomnica), priraďujeme podľa katastrálnych území ZBGIS.
+
+Polohu hľadáme v tomto poradí a použijeme prvý bod, ktorý leží v obci z registra:
+
+1. ručne overená poloha, ak existuje (použije sa vždy),
+2. presná adresa (ulica a číslo, obec, PSČ),
+3. ak presná adresa nič nenájde: upravené znenie adresy (bez predpôn ako „ul.“ alebo „č.“, s prehodeným súpisným a orientačným číslom, pri obciach bez ulíc iba obec a číslo domu),
+4. ak bod presnej adresy leží mimo obce z registra: tá istá adresa hľadaná iba na území tejto obce,
+5. obec a PSČ,
+6. referenčný bod obce (presnosť „iba stred obce“).
+
+Každý bod musí ležať na území Slovenska. Bod, ktorý leží najviac 300 m za hranicou obce z registra, ponecháme (hranica obce často vedie ulicou), ale ambulanciu započítame do obce a okresu podľa registra. Ak pri adrese pripadá do úvahy viac obcí s rovnakým názvom a žiadny bod do nich nepadne, bod overujeme ručne. Pri každej ambulancii uvádzame presnosť polohy: presná adresa, ulica alebo iba stred obce.
+
+## Kontrola kvality
+
+Každý krok spracovania končí kontrolami. Ak kontrola zlyhá, výsledky sa nezverejnia. Kontrolujeme najmä:
+
+- očakávané stĺpce registra, formát kódov a čitateľnosť dátumov,
+- počty ambulancií oproti očakávaným hodnotám a oproti minulému mesiacu,
+- súradnice mimo Slovenska, adresy bez polohy a podozrivé zhluky na jednom bode,
+- možné duplicitné záznamy,
+- súčty počtov obyvateľov oproti údaju za Slovensko,
+- porovnanie našich počtov po krajoch s tabuľkami NCZI (pozri nižšie). Upozorní, ak je pomer register / NCZI v niektorom kraji mimo 0,8 – 1,6, a nikdy neblokuje zverejnenie.
+
+<a id="nczi"></a>
+
+## Porovnanie s NCZI
+
+Porovnávame počet ambulancií v registri ÚDZS s „počtom útvarov“ v tabuľkách NCZI T2 (výstup S01 o sieti poskytovateľov za rok 2024, riadky „ambulancia_výstup“, odbornosti 008 a 020). NCZI uvádza stav k 31. 12. 2024. Kraj ambulancie určujeme podľa adresy v registri.
+
+Register má k 1. 10. 2026 o 29 % viac ambulancií všeobecných lekárov pre dospelých (2 433 vs. 1 891) a o 24 % viac ambulancií pediatrov prvého kontaktu (1 101 vs. 885). Rozdiel je vo všetkých krajoch, najväčší v Bratislavskom kraji.
+
+Čo sme overili výpočtom:
+
+- Približne polovicu rozdielu pri VLD a viac ako polovicu pri pediatroch tvoria kódy, ktorých platnosť sa začala až po 31. 12. 2024 (266 VLD a 136 VLDD). Údaje NCZI ich ešte nemôžu obsahovať.
+- Ďalšiu časť tvoria viaceré kódy toho istého poskytovateľa (IČO) na tej istej adrese.
+- Bez kódov začatých po 31. 12. 2024 a so zlúčením kódov s rovnakým IČO a adresou by bol rozdiel 8 % pri VLD a 6 % pri pediatroch.
+
+Možné ďalšie príčiny, ktoré sme neoverili (hypotézy): nový kód môže nahrádzať starší kód na tom istom mieste, „útvar“ v NCZI nemusí zodpovedať jednému kódu v registri a časť kódov nemusí mať reálnu činnosť ani zmluvu s poisťovňou.
+
+Záznamy kvôli tomuto rozdielu nefiltrujeme. Každý platný kód v registri počítame ako jednu ambulanciu (pozri U1). Doplnkovo uvádzame počet pracovísk, v ktorom sa viac kódov toho istého poskytovateľa na jednej adrese počíta raz (pozri U6).
+
+## Obmedzenia
+
+- Register obsahuje kódy poskytovateľov. Existencia kódu neznamená, že ambulancia skutočne funguje alebo má zmluvu so zdravotnou poisťovňou.
+- Register neuvádza, či ambulancia prijíma nových pacientov, ordinačné hodiny, telefón, počet lekárov ani meno ordinujúceho lekára. Pri spoločnostiach je uvedený iba názov firmy.
+- Počet ambulancií nie je kapacita: nehovorí o úväzkoch ani o počte pacientov.
+- Vzdialenosti sú vzdušnou čiarou, nie po ceste.
+- Zdroje majú rôzne dátumy stavu.
+- Hranice obcí sú na webe zjednodušené. Výpočty používajú presné hranice.
+
+## Reprodukovateľnosť
+
+Každý výstup nesie dátum zdrojových dát a verziu výpočtu. Celý postup je v otvorenom zdrojovom kóde a dá sa zopakovať. Surové dáta s menami poskytovateľov sa do repozitára neukladajú. Register si pipeline stiahne z pôvodného zdroja, počty obyvateľov zo STATdata sa podľa podmienok Štatistického úradu SR sťahujú ručne.
+
+## História zmien metodiky
+
+| Verzia | Dátum | Zmena |
+|---|---|---|
+| 0.1.0 | október 2026 | prvá verzia: ukazovatele U1 až U5 a doplnkový U6 (pracoviská); obyvatelia zo STATdata (om7006rr, stredný stav 2025); kontrola s NCZI S01 2024; poloha musí ležať v obci z registra (tolerancia 300 m) |
+
+<a id="oprava"></a>
+
+## Oprava alebo odstránenie záznamu
+
+Ak je záznam o vašej ambulancii nesprávny, alebo chcete, aby sa na stránke nezobrazoval:
+
+1. Napíšte na projektový e-mail uvedený nižšie. Uveďte názov a adresu ambulancie tak, ako sú zobrazené na stránke, a čo treba opraviť alebo skryť.
+2. Prijatie potvrdíme do 2 pracovných dní.
+3. Opravu polohy alebo skrytie záznamu urobíme do 5 pracovných dní. Skrytý záznam sa nepoužije nikde, ani v súhrnných počtoch.
+4. Ak je chyba priamo v registri ÚDZS (napr. adresa alebo názov), opravu treba požiadať aj u ÚDZS. Stránka preberá údaje z registra.

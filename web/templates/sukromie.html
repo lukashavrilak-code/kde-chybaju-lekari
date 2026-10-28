@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Ochrana súkromia a kontakt – {% endblock %}
+{% block main %}
+<article class="text">
+<h1>Ochrana súkromia a kontakt</h1>
+<p><strong>Prevádzkovateľ:</strong> {{ projekt.prevadzkovatel or "[DOPLŇ MENO PREVÁDZKOVATEĽA]" }}<br>
+<strong>Kontakt:</strong> {% if projekt.kontakt_email %}<a href="mailto:{{ projekt.kontakt_email }}">{{ projekt.kontakt_email }}</a>{% else %}[DOPLŇ PROJEKTOVÝ E-MAIL]{% endif %}</p>
+{{ sukromie_html|safe }}
+</article>
+{% endblock %}

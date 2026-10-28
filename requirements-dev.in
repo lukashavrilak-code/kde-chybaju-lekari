@@ -1,0 +1,7 @@
+-c requirements.txt
+ghp-import
+pip-audit
+pip-tools
+pre-commit
+pytest
+ruff
