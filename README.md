@@ -9,7 +9,8 @@ Interaktívna mapa dostupnosti **všeobecných lekárov pre dospelých** a **ped
 ## Čo stránka ukazuje
 
 - mapu okresov zafarbenú podľa počtu ambulancií na 10 000 obyvateľov príslušnej vekovej skupiny,
-- pre každú obec vzdialenosť k najbližšej ambulancii a počet ambulancií do 10 a 20 km,
+- pre každú obec vzdialenosť k najbližšej ambulancii a počet ambulancií do 10 a 20 km, aj ako mapu obcí,
+- podiel obyvateľov okresu, ktorí majú najbližšiu ambulanciu ďalej ako 5 a 10 km,
 - zoznam ambulancií v okolí s odkazom na oficiálne vyhľadávanie lekárov zdravotných poisťovní,
 - rebríčky okresov a ukazovatele na stiahnutie (CSV).
 
@@ -21,7 +22,7 @@ Stránka **neukazuje**, či ambulancia prijíma pacientov, ordinačné hodiny an
 flowchart LR
     UDZS["Register ÚDZS<br/>XLSX"] --> P
     SD["ŠÚ SR STATdata<br/>obyvatelia (ručný export)"] --> P
-    ZB["ZBGIS<br/>hranice obcí"] --> P
+    ZB["ZBGIS<br/>hranice a sídla obcí"] --> P
     NC["NCZI S01<br/>kontrola počtov"] --> P
     NOM["OSM Nominatim"] <--> P
     subgraph P [Python pipeline – lokálne]

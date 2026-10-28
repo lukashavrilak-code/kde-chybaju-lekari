@@ -7,7 +7,7 @@ import pandas as pd
 from . import __version__
 from .areas import areas_dir
 from .checks import Checks, utc_now
-from .compute import DENOMINATOR, load_ambulances
+from .compute import DENOMINATOR, FAR_COLUMNS, load_ambulances
 from .config import ROOT, project_path, published_types
 from .files import write_csv_rows, write_json
 from .site import build_site
@@ -19,7 +19,7 @@ ALLOWED_EXTENSIONS = {".html", ".css", ".js", ".json", ".geojson", ".csv", ".png
 SK_BOUNDS = {"lat": (47.7, 49.7), "lon": (16.8, 22.6)}
 FIRST_LOAD = ["index.html", "static/css/style.css", "data/meta.json", "data/okresy.geojson"]
 OKRES_CSV = ["okres_kod", "okres", "kraj", "typ", "pocet_ambulancii", "pocet_pracovisk", "na_10k", "menovatel", "poradie",
-             "stav_registra", "stav_obyvatelstva", "verzia_pipeline"]
+             *FAR_COLUMNS, "stav_registra", "stav_obyvatelstva", "verzia_pipeline"]
 OBEC_CSV = ["obec_kod", "obec", "okres", "typ", "najblizsia_km", "pocet_v_obci", "pocet_do_10km", "pocet_do_20km",
             "stav_registra", "verzia_pipeline"]
 
@@ -74,6 +74,8 @@ def export_okresy(cfg, okresy, indicators, types, meta):
             props[f"{prefix}_pracoviska"] = int(row["pocet_pracovisk"])
             props[f"{prefix}_na10k"] = float(row["na_10k"])
             props[f"{prefix}_poradie"] = int(row["poradie"])
+            for name, km in zip(FAR_COLUMNS, cfg["vypocty"]["podiel_nad_km"]):
+                props[f"{prefix}_nad{km}"] = float(row[name])
         geometry = feature["geometry"]
         features.append({
             "type": "Feature",
@@ -120,7 +122,8 @@ def csv_rows(okresy, obce, okres_ind, obec_ind, types, meta):
             "okres_kod": r.okres_kod, "okres": okresy.at[r.okres_kod, "nazov"], "kraj": okresy.at[r.okres_kod, "kraj_nazov"],
             "typ": r.typ, "pocet_ambulancii": r.pocet, "pocet_pracovisk": r.pocet_pracovisk, "na_10k": f"{r.na_10k:.2f}",
             "menovatel": DENOMINATOR_NAMES[r.typ],
-            "poradie": r.poradie, "stav_registra": meta["stav_registra"], "stav_obyvatelstva": meta["stav_obyvatelstva"],
+            "poradie": r.poradie, "podiel_nad_5km": f"{r.podiel_nad_5km:.4f}", "podiel_nad_10km": f"{r.podiel_nad_10km:.4f}",
+            "stav_registra": meta["stav_registra"], "stav_obyvatelstva": meta["stav_obyvatelstva"],
             "verzia_pipeline": meta["verzia_pipeline"],
         })
     names = obce.set_index("obec_kod")
@@ -146,6 +149,16 @@ def rankings(okresy, okres_ind, types):
             for r in part.itertuples()
         ]
         result[typ] = {"vsetky": rows, "najhorsie": rows[:10], "najlepsie": list(reversed(rows[-10:]))}
+    return result
+
+
+def distance_shares_sr(obce, obec_ind, types, limits):
+    result = {}
+    for typ in types:
+        rows = obec_ind[obec_ind["typ"] == typ].merge(obce, on="obec_kod")
+        population = rows[DENOMINATOR[typ]]
+        distance = rows["najblizsia_km"].fillna(float("inf"))
+        result[typ] = {str(km): round(float(population[distance > km].sum() / population.sum()), 4) for km in limits}
     return result
 
 
@@ -187,7 +200,8 @@ def nczi_rows(con, sid, okresy, types):
 
 def sources(cfg, con, snapshot):
     rows = {r["zdroj_id"]: r for r in con.execute("SELECT * FROM zdroj")}
-    zbgis, deti, dospeli = rows.get("zbgis"), rows.get("statdata_deti"), rows.get("statdata_dospeli")
+    zbgis, sidla = rows.get("zbgis"), rows.get("zbgis_sidla")
+    deti, dospeli = rows.get("statdata_deti"), rows.get("statdata_dospeli")
     obyvatelia = cfg["obyvatelia"]
     return [
         {"id": "udzs", "nazov": "ÚDZS – Kódy poskytovateľov zdravotnej starostlivosti", "url": snapshot["url"],
@@ -197,6 +211,8 @@ def sources(cfg, con, snapshot):
          "sha256": {"0-17": deti["sha256"] if deti else None, "18+": dospeli["sha256"] if dospeli else None}},
         {"id": "zbgis", "nazov": "ÚGKK SR – ZBGIS, hranice obcí", "licencia": "CC BY 4.0",
          "sha256": zbgis["sha256"] if zbgis else None},
+        {"id": "zbgis_sidla", "nazov": "ÚGKK SR – ZBGIS, geografické názvy obcí (body sídiel)", "licencia": "CC BY 4.0",
+         "sha256": sidla["sha256"] if sidla else None},
         {"id": "osm", "nazov": "OpenStreetMap (mapa, geokódovanie cez Nominatim)", "licencia": "ODbL",
          "atribucia": "© OpenStreetMap contributors"},
     ]
@@ -271,6 +287,8 @@ def export(cfg, con, snapshot):
         "validacia": validation_summary(con, sid),
         "subory_csv": [{"nazov": name, "kb": round(file_kb(downloads / name), 1)} for name in csv_files],
         "polomery": cfg["vypocty"]["polomery_km"],
+        "podiel_nad_km": cfg["vypocty"]["podiel_nad_km"],
+        "vzdialenost_sr": distance_shares_sr(obce, obec_ind, types, cfg["vypocty"]["podiel_nad_km"]),
         "vylucene": excluded_count(con, sid),
     }
     pages = build_site(cfg, context, site)
@@ -292,6 +310,8 @@ def export(cfg, con, snapshot):
         "stlpec_menovatela": {t: DENOMINATOR[t] for t in types},
         "legenda": {**{t: cfg["legenda"][t] for t in types}, "vzdialenost_km": cfg["legenda"]["vzdialenost_km"]},
         "polomery_km": cfg["vypocty"]["polomery_km"],
+        "podiel_nad_km": context["podiel_nad_km"],
+        "vzdialenost_sr": context["vzdialenost_sr"],
         "max_zoznam_km": cfg["vypocty"]["max_zoznam_km"],
         "poistovne": [p for p in cfg["web"]["poistovne"] if p["url"]],
         "kontakt_email": cfg["projekt"]["kontakt_email"],

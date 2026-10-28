@@ -11,6 +11,7 @@ export function haversineKm(lat1, lon1, lat2, lon2) {
 const desatinne1 = new Intl.NumberFormat("sk-SK", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const desatinne2 = new Intl.NumberFormat("sk-SK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const cele = new Intl.NumberFormat("sk-SK");
+const percento = new Intl.NumberFormat("sk-SK", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 export function formatKm(km) {
   if (km === null || km === undefined) return "–";
@@ -23,6 +24,10 @@ export function formatNa10k(hodnota) {
 
 export function formatCislo(hodnota) {
   return cele.format(hodnota);
+}
+
+export function formatPercento(podiel) {
+  return percento.format(podiel);
 }
 
 export function formatDatum(iso) {

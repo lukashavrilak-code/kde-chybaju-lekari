@@ -10,7 +10,7 @@ Stránka **neukazuje**, či ambulancia prijíma nových pacientov, aké má ordi
 |---|---|---|
 | ÚDZS – Kódy poskytovateľov zdravotnej starostlivosti (XLSX) | názov poskytovateľa, odbornosť z kódu, adresa ambulancie, platnosť záznamu | licencia nie je uvedená |
 | Štatistický úrad SR – STATdata, tabuľka om7006rr | počet obyvateľov obcí vo veku 0 – 17 a 18+ (menovateľ) | CC BY 4.0, „Zdroj: Štatistický úrad SR, CC BY 4.0, www.statistics.sk“ |
-| ÚGKK SR – ZBGIS | hranice obcí a okresov | CC BY 4.0, hranice sú pre web zjednodušené |
+| ÚGKK SR – ZBGIS | hranice obcí a okresov, bod sídla každej obce (geografické názvy obcí) | CC BY 4.0, hranice sú pre web zjednodušené |
 | OpenStreetMap – Nominatim | poloha (súradnice) adries ambulancií | © OpenStreetMap contributors, ODbL |
 | NCZI – výstup S01 o sieti poskytovateľov (tabuľky T2) | iba kontrola našich počtov po krajoch | citujeme zdroj |
 
@@ -51,11 +51,11 @@ Obmedzenia: ľudia chodia k lekárovi aj mimo svojho okresu, najmä do miest. Me
 
 ### U3 – Vzdialenosť k najbližšej ambulancii (obec)
 
-Vzdušná vzdialenosť v kilometroch z **referenčného bodu obce** k najbližšej ambulancii daného typu, aj v inom okrese. Referenčný bod je geometrický stred územia obce. Ak stred leží mimo územia, použijeme bod, ktorý zaručene leží vnútri.
+Vzdušná vzdialenosť v kilometroch z **referenčného bodu obce** k najbližšej ambulancii daného typu, aj v inom okrese. Referenčný bod je bod sídla obce zo ZBGIS, teda bod, ku ktorému ZBGIS priraďuje názov obce (vrstva geografických názvov obcí). Leží v obci, spravidla v jej zastavanej časti. Geometrický stred územia sme nepoužili, lebo pri rozľahlých obciach často padne do hôr alebo lesa. Ak by obec bod sídla nemala alebo by ležal mimo jej územia, použijeme geometrický stred územia, prípadne bod, ktorý zaručene leží vnútri.
 
 Vzdialenosť počítame vzorcom haversine na guli s polomerom 6 371 km. Na webe aj v Pythone používame rovnaký vzorec a rovnaké zaokrúhlené súradnice, aby sa čísla zhodovali.
 
-Obmedzenia: skutočná cesta autom alebo autobusom je dlhšia. Stred obce nemusí byť tam, kde ľudia bývajú, najmä pri rozľahlých obciach s osadami.
+Obmedzenia: skutočná cesta autom alebo autobusom je dlhšia. Všetci obyvatelia obce dostanú vzdialenosť z jedného bodu, hoci obec môže mať viac častí alebo osád.
 
 <a id="u4"></a>
 
@@ -78,6 +78,16 @@ Počet rôznych **pracovísk** daného typu v okrese. Pracovisko je jedna dvojic
 Prečo ho uvádzame: v registri má niekedy jeden poskytovateľ na jednom mieste viac kódov, a preto je počet kódov (U1) vyšší než počet miest, kam pacient reálne chodí. Hlavným ukazovateľom ostáva U1. Farby mapy aj rebríček sa počítajú z U2, ktorý vychádza z U1.
 
 Obmedzenia: adresu porovnávame tak, ako je zapísaná v registri. Rovnaká adresa napísaná inak (napr. iné poradie čísel) sa počíta ako dve pracoviská. Ani pracovisko nehovorí o počte lekárov ani o úväzkoch.
+
+<a id="u7"></a>
+
+### U7 – Podiel obyvateľov ďalej ako 5 a 10 km (okres)
+
+Podiel obyvateľov okresu z príslušnej vekovej skupiny (18+ pri všeobecných lekároch, 0 – 17 pri pediatroch), ktorí bývajú v obciach, ktorých referenčný bod je od najbližšej ambulancie daného typu vzdušne ďalej ako 5 km, resp. 10 km (pozri [U3](#u3)). Ambulancia môže byť aj v inom okrese.
+
+Prečo ho uvádzame: U2 hovorí, koľko ambulancií pripadá na obyvateľov okresu, ale nie, ako ďaleko to majú ľudia. Riedko osídlený okres môže mať veľa ambulancií na obyvateľa, a predsa veľa ľudí ďaleko od najbližšej z nich.
+
+Obmedzenia: rovnaké ako pri U3. Všetci obyvatelia obce dostanú vzdialenosť jej referenčného bodu a vzdialenosť je vzdušnou čiarou. Ukazovateľ nehovorí o kapacite ambulancií.
 
 ## Poloha ambulancií
 
@@ -103,6 +113,7 @@ Každý krok spracovania končí kontrolami. Ak kontrola zlyhá, výsledky sa ne
 - očakávané stĺpce registra, formát kódov a čitateľnosť dátumov,
 - počty ambulancií oproti očakávaným hodnotám a oproti minulému mesiacu,
 - súradnice mimo Slovenska, adresy bez polohy a podozrivé zhluky na jednom bode,
+- či má každá obec bod sídla a či obce s vlastnou ambulanciou nemajú referenčný bod ďaleko od nej,
 - možné duplicitné záznamy,
 - súčty počtov obyvateľov oproti údaju za Slovensko,
 - porovnanie našich počtov po krajoch s tabuľkami NCZI (pozri nižšie). Upozorní, ak je pomer register / NCZI v niektorom kraji mimo 0,8 – 1,6, a nikdy neblokuje zverejnenie.
@@ -142,7 +153,7 @@ Každý výstup nesie dátum zdrojových dát a verziu výpočtu. Celý postup j
 
 | Verzia | Dátum | Zmena |
 |---|---|---|
-| 0.1.0 | október 2026 | prvá verzia: ukazovatele U1 až U5 a doplnkový U6 (pracoviská); obyvatelia zo STATdata (om7006rr, stredný stav 2025); kontrola s NCZI S01 2024; poloha musí ležať v obci z registra (tolerancia 300 m) |
+| 0.1.0 | október 2026 | prvá verzia: ukazovatele U1 až U5, doplnkový U6 (pracoviská) a U7 (podiel obyvateľov ďalej ako 5 a 10 km); referenčný bod obce je bod sídla zo ZBGIS; obyvatelia zo STATdata (om7006rr, stredný stav 2025); kontrola s NCZI S01 2024; poloha musí ležať v obci z registra (tolerancia 300 m) |
 
 <a id="oprava"></a>
 

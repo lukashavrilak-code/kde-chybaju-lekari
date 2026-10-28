@@ -23,6 +23,7 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
     assert meta["pracoviska"] == {"VLD": 11, "VLDD": 4}
     statdata = next(z for z in meta["zdroje"] if z["id"] == "statdata")
     assert statdata["atribucia"] == "Zdroj: Štatistický úrad SR, CC BY 4.0, www.statistics.sk"
+    assert set(meta["vzdialenost_sr"]) == {"VLD", "VLDD"} and set(meta["vzdialenost_sr"]["VLD"]) == {"5", "10"}
 
     snapshot = BASE / "snapshots" / "udzs" / "2026-10-01.xlsx"
     assert (BASE / "snapshots" / "udzs" / "2026-10-01.xlsx.sha256").read_text(encoding="utf-8").split()[0] == sha256_file(snapshot)
@@ -40,6 +41,11 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
         assert con.execute("SELECT presnost, zdroj FROM geokod WHERE adresa_kluc = 'dlhá 5|vzorkovce|04001'").fetchone() == (
             "obec", "stred_obce")
         assert con.execute("SELECT SUM(pocet), SUM(pocet_pracovisk) FROM ukazovatel_okres WHERE typ = 'VLD'").fetchone() == (12, 11)
+        assert con.execute("SELECT obec_kod, ref_zdroj FROM obec ORDER BY obec_kod").fetchall() == [
+            ("900001", "sidlo"), ("900002", "sidlo"), ("900003", "sidlo"), ("900004", "stred"), ("900005", "stred"),
+            ("900006", "sidlo")]
+        assert con.execute("SELECT vysledok, hodnota FROM validacia WHERE kod = 'V3.9'").fetchall() == [("WARN", "4 z 6")]
+        assert con.execute("SELECT COUNT(*) FROM validacia WHERE kod = 'V5.6' AND vysledok = 'INFO'").fetchone()[0] == 2
     finally:
         con.close()
     mismatches = read_csv_rows(BASE / "local" / "reports" / "geokod_mimo_obce_2026-10-01.csv")
@@ -49,8 +55,9 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
     ]
     okresy = json.loads((SITE / "data" / "okresy.geojson").read_text(encoding="utf-8"))["features"]
     assert sum(f["properties"]["vld_pracoviska"] for f in okresy) == 11
+    assert all({"vld_nad5", "vld_nad10", "vldd_nad5", "vldd_nad10"} <= set(f["properties"]) for f in okresy)
     okres_csv = read_csv_rows(next((SITE / "downloads").glob("ukazovatele_okresy_*.csv")))
-    assert "pocet_pracovisk" in okres_csv[0]
+    assert "pocet_pracovisk" in okres_csv[0] and "podiel_nad_10km" in okres_csv[0]
     assert "stredný stav 2025" in (SITE / "metodika.html").read_text(encoding="utf-8")
 
     ambulancie = json.loads((SITE / "data" / "ambulancie.json").read_text(encoding="utf-8"))["ambulancie"]

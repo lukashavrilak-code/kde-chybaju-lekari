@@ -1,6 +1,7 @@
+import numpy as np
 import pandas as pd
 
-from pipeline.compute import obec_indicators, okres_indicators
+from pipeline.compute import distance_shares, obec_indicators, okres_indicators
 
 
 def test_okres_rate_and_rank_on_hand_computed_example():
@@ -45,3 +46,16 @@ def test_obec_distances_and_counts():
     assert round(result.loc["2", "najblizsia_km"], 1) == 11.1
     assert result.loc["2", "pocet_10km"] == 0
     assert result.loc["2", "pocet_20km"] == 1
+
+
+def test_distance_shares_weighted_by_population():
+    obce = pd.DataFrame({
+        "obec_kod": ["1", "2", "3", "4"],
+        "okres_kod": ["A", "A", "A", "B"],
+        "obyv_dospeli": [100, 300, 600, 50],
+    })
+    rows = pd.DataFrame({"obec_kod": ["1", "2", "3", "4"], "typ": "VLD", "najblizsia_km": [3.0, 6.0, 12.0, np.nan]})
+    result = distance_shares(rows, obce, "VLD", [5, 10]).set_index("okres_kod")
+    assert result.loc["A", "podiel_nad_5km"] == 0.9
+    assert result.loc["A", "podiel_nad_10km"] == 0.6
+    assert result.loc["B", "podiel_nad_10km"] == 1.0

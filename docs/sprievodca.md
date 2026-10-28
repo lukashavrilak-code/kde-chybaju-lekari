@@ -26,7 +26,7 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 
 | Stránka | Čo ukazuje | Šablóna | JavaScript | Dáta |
 |---|---|---|---|---|
-| Mapa | okresy zafarbené podľa U2, legenda, panel okresu a obce, vyhľadanie obce | `index.html` | všetky moduly | `meta.json`, `okresy.geojson`, neskôr `obce.json` a `ambulancie.json` |
+| Mapa | okresy zafarbené podľa U2 alebo obce podľa vzdialenosti (U3), legenda, panel okresu a obce, vyhľadanie obce | `index.html` | všetky moduly | `meta.json`, `okresy.geojson`, neskôr `obce.json` a `ambulancie.json` |
 | Rebríčky | 10 najhorších a 10 najlepších okresov, celé poradie s pracoviskami | `rebricky.html` | žiadny | vypočítané v Pythone pri exporte |
 | Dáta | CSV na stiahnutie a popis stĺpcov | `data.html` | žiadny | `downloads/*.csv` |
 | Metodika | text z `docs/metodika.md` a tabuľka „Aktuálny stav dát“ | `metodika.html` | žiadny | – |
@@ -40,14 +40,14 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 | Súbor | Úloha |
 |---|---|
 | `app.js` | riadi stránku: načíta dáta, číta a zapisuje stav v adrese a reaguje na kliknutia |
-| `map.js` | mapa Leaflet, farby okresov, legenda, okruhy 10 a 20 km a body ambulancií |
+| `map.js` | mapa Leaflet, farby okresov, vrstva obcí podľa vzdialenosti, legenda, okruhy 10 a 20 km a body ambulancií |
 | `panel.js` | obsah panela vpravo (na mobile pod mapou): okres, obec, karty ambulancií |
 | `search.js` | vyhľadávanie obce s návrhmi (funguje aj bez diakritiky) |
 | `util.js` | pomocné funkcie: vzdialenosť (haversine), formát čísel, `el()` na tvorbu prvkov, načítanie JSON |
 
 Pri otvorení mapy sa načítajú iba `meta.json` a `okresy.geojson`. Zoznam obcí (`obce.json`) sa načíta až pri kliknutí do vyhľadávania. Zoznam ambulancií (`ambulancie.json`) sa načíta až po výbere obce. Prvé načítanie je tak menšie.
 
-**Stav v adrese.** Výber sa zapisuje za znak `#`, napr. `index.html#typ=VLDD&obec=<kód obce>` alebo `#okres=<kód okresu>`. Takýto odkaz sa dá poslať a tlačidlo Späť v prehliadači funguje (udalosť `hashchange` v `app.js`).
+**Stav v adrese.** Výber sa zapisuje za znak `#`, napr. `index.html#typ=VLDD&obec=<kód obce>`, `#okres=<kód okresu>` alebo `#vrstva=obce` (mapa obcí podľa vzdialenosti). Takýto odkaz sa dá poslať a tlačidlo Späť v prehliadači funguje (udalosť `hashchange` v `app.js`).
 
 **Prečo nikde nie je `innerHTML`.** Názvy a adresy z registra sa do stránky vkladajú iba ako text, cez funkciu `el()` (vlastnosť `textContent`). Aj keby register obsahoval kód HTML, zobrazí sa ako obyčajný text. Umelé dáta preto zámerne obsahujú názov `<img src=x onerror=alert(1)>`. `scripts/check_repo.py` zakázané vzory v JS kontroluje.
 
@@ -62,7 +62,8 @@ Pri otvorení mapy sa načítajú iba `meta.json` a `okresy.geojson`. Zoznam obc
 Na počítači:
 - [ ] Mapa: farby okresov a legenda. Sedí počet okresov v zátvorkách v legende?
 - [ ] Prepínač „Lekári pre dospelých / Pediatri“: zmenia sa farby aj legenda?
-- [ ] Klik na okres: panel s ukazovateľmi U1, U6, U2, U5. Ikona ⓘ vedie do metodiky.
+- [ ] Klik na okres: panel s ukazovateľmi U1, U6, U2, U5 a U7. Ikona ⓘ vedie do metodiky.
+- [ ] Prepínač „Mapa: Obce podľa vzdialenosti“: každá obec je bod, tmavší bod = ďalej od ambulancie. Klik na bod vyberie obec.
 - [ ] Vyhľadanie obce (skús aj bez diakritiky): okruhy 10 a 20 km, body ambulancií, panel obce.
 - [ ] Karty ambulancií: „Zobraziť ďalšie“, „Kontakt a ordinačné hodiny“, „Nahlásiť chybu v zázname“.
 - [ ] Klik na bod na mape zvýrazní kartu a klik na kartu zvýrazní bod.
@@ -110,12 +111,12 @@ Príkaz `python -m pipeline all` spustí kroky v tomto poradí. Každý krok sa 
 | # | Krok | Modul | Vstup | Výstup | Hlavné kontroly |
 |---|---|---|---|---|---|
 | 1 | `download` | `download.py` | stránka ÚDZS: nájde najnovší odkaz `VyberKpWeb_*.xlsx` | `data/snapshots/udzs/RRRR-MM-DD.xlsx` s `.sha256`, tabuľka `snapshot`, `data/history/snapshoty.csv` | V1.0 odkaz, V1.1 HTTPS a doména, V1.2 veľkosť, V1.3 XLSX bez makier, V1.4 rovnaký súbor sa druhýkrát neuloží |
-| 2 | `areas` | `areas.py` | hranice obcí ZBGIS, dva súbory STATdata (0–17 a 18+) | tabuľky `obec` a `okres`, `data/local/uzemia/` | V1.5 súradnicový systém a stĺpce, V3.4 geometrie a 79 okresov, V3.5 obyvatelia (súčet = SR), V3.6 zjednodušenie hraníc |
+| 2 | `areas` | `areas.py` | hranice obcí ZBGIS, body sídiel ZBGIS (geografické názvy), dva súbory STATdata (0–17 a 18+) | tabuľky `obec` a `okres`, `data/local/uzemia/` | V1.5 súradnicový systém a stĺpce, V3.4 geometrie a 79 okresov, V3.5 obyvatelia (súčet = SR), V3.6 zjednodušenie hraníc, V3.9 bod sídla každej obce |
 | 3 | `validate` | `validate.py` | snapshot registra | tabuľka `odbornost_pocet` | V2.1 stĺpce, V2.2 zmena počtu riadkov, V2.3 formát kódu, V2.4 počty 020 a 008, V2.5 dátumy, V2.6 jedinečnosť kódov, V2.7 texty |
 | 4 | `clean` | `clean.py` | snapshot, `data/local/blocklist.csv`, `data/manual/obec_mapping.csv` | tabuľky `ambulancia` a `adresa_obec` | V3.0 výber, V3.1 blocklist, V3.2 adresa, V3.3 možné duplicity, V3.8 obec z adresy |
 | 5 | `nczi` | `nczi.py` | súbor NCZI (stiahne sa raz) | tabuľka `nczi_porovnanie`, report `nczi_rozdiel_*.md` | V3.7 pomer register / NCZI (iba upozornenie) |
 | 6 | `geocode` | `geocode.py` | adresy ambulancií, cache, `data/manual/geocode_overrides.csv` | tabuľka `geokod`, `data/cache/geocode_cache.csv`, reporty `geokod_*.csv` | V4.1 až V4.6 poloha, obec, presnosť, zhluky |
-| 7 | `compute` | `compute.py` | ambulancie s polohou, obce, okresy | tabuľky `ukazovatel_okres` a `ukazovatel_obec`, `data/history/pocty_okresy.csv` | V5.1 súčty, V5.2 menovateľ a odľahlé hodnoty, V5.4 zmeny v čase, V5.5 konzistentnosť |
+| 7 | `compute` | `compute.py` | ambulancie s polohou, obce, okresy | tabuľky `ukazovatel_okres` a `ukazovatel_obec`, `data/history/pocty_okresy.csv` | V5.1 súčty, V5.2 menovateľ a odľahlé hodnoty, V5.4 zmeny v čase, V5.5 konzistentnosť, V5.6 obce s ambulanciou, no s referenčným bodom ďaleko od nej |
 | 8 | `export` | `export.py`, `site.py` | všetky tabuľky | `site/` (HTML, `data/*.json`, `downloads/*.csv`), report validácie | V6.1 až V6.6 povolené kľúče, veľkosti súborov, súradnice, upozornenie, typy súborov, CSV bez vzorcov |
 
 `areas` beží hneď po `download`, lebo `clean` potrebuje tabuľku obcí na priradenie obce k adrese. Diagram v README ukazuje tie isté kroky zjednodušene.
@@ -137,10 +138,10 @@ Všetky medzivýsledky sú v SQLite súbore `data/local/lekari.sqlite`. Schéma 
 | `ambulancia` | vyčistené platné ambulancie VLD a VLDD: názov, IČO, adresa, platnosť | `snapshot_id`, `pzs_kod` |
 | `geokod` | poloha každej adresy: súradnice, presnosť, zdroj, obec | `adresa_kluc` |
 | `adresa_obec` | ku ktorej obci (obciam) patrí názov obce z adresy | `adresa_kluc`, `obec_kod` |
-| `obec` | 2 927 obcí: názov, okres, kraj, referenčný bod, obyvatelia | `obec_kod` |
+| `obec` | 2 927 obcí: názov, okres, kraj, referenčný bod a jeho zdroj (`ref_zdroj`: `sidlo` alebo `stred`), obyvatelia | `obec_kod` |
 | `okres` | 79 okresov: názov, kraj, súčty obyvateľov | `okres_kod` |
 | `nczi_porovnanie` | naše počty a počty NCZI po krajoch | `snapshot_id`, `typ`, `kraj_kod` |
-| `ukazovatel_okres` | U1, U2, U5, U6 pre každý okres a typ | `snapshot_id`, `okres_kod`, `typ` |
+| `ukazovatel_okres` | U1, U2, U5, U6, U7 pre každý okres a typ | `snapshot_id`, `okres_kod`, `typ` |
 | `ukazovatel_obec` | U3, U4 pre každú obec a typ | `snapshot_id`, `obec_kod`, `typ` |
 | `zdroj` | odtlačky vstupných súborov ZBGIS a STATdata | `zdroj_id` |
 | `validacia` | výsledky všetkých kontrol | – |
@@ -181,12 +182,20 @@ Kontrola V5.2 upozorní (WARN, nie FAIL) na okres, ktorého U2 je viac ako trojn
 
 ### U3 a U4: vzdialenosť a počet v okolí obce
 
-- **Referenčný bod obce** je geometrický stred jej územia. Ak by stred ležal mimo územia (napr. pri obci v tvare podkovy), použije sa bod, ktorý zaručene leží vnútri (`reference_points` v `areas.py`).
+- **Referenčný bod obce** je bod sídla obce zo ZBGIS, teda miesto, ku ktorému je priradený názov obce (`settlement_points` v `areas.py`). Pôvodne to bol geometrický stred územia. Pri rozľahlých obciach však padol do hôr: Ľubochňa má ambulanciu priamo v obci, a predsa zo stredu vyšlo 10,2 km. Z bodu sídla vychádza 0,2 km. Takých obcí bolo 172 a po zmene ostala jedna (kontrola V5.6, overenie O18). Ak obec bod sídla nemá, použije sa stred územia (`reference_points`).
 - **Haversine** je vzorec na vzdušnú vzdialenosť po povrchu gule s polomerom 6 371 km. Python (`haversine_km` v `compute.py`) aj web (`haversineKm` v `util.js`) používajú ten istý vzorec, preto sa čísla na webe a v CSV zhodujú. Pre predstavu: 1° zemepisnej šírky je asi 111,2 km, 0,1° asi 11,1 km (test v `tests/test_compute.py`).
 - **U3** je vzdialenosť k najbližšej ambulancii. **U4** je počet ambulancií do 10 km a do 20 km.
 - Kontrola V5.5 overí, či to dáva zmysel: ak je najbližšia ambulancia do 10 km, počet do 10 km musí byť aspoň 1.
 
-Obmedzenia: skutočná cesta je dlhšia ako vzdušná čiara a stred obce nemusí byť tam, kde ľudia bývajú.
+Obmedzenia: skutočná cesta je dlhšia ako vzdušná čiara a všetci obyvatelia obce dostanú vzdialenosť z jedného bodu, aj keď obec má viac častí.
+
+### U7: podiel obyvateľov ďaleko od ambulancie
+
+Pre každý okres: koľko percent obyvateľov príslušnej vekovej skupiny býva v obciach, kde je najbližšia ambulancia ďalej ako 5 km, resp. 10 km (funkcia `distance_shares` v `compute.py`). Je to **vážený** podiel: veľká obec sa počíta s väčšou váhou ako malá.
+
+Príklad: okres má tri obce so 100, 300 a 600 dospelými. Ich najbližšia ambulancia je vzdialená 3, 6 a 12 km. Ďalej ako 5 km býva 300 + 600 = 900 z 1 000 dospelých, teda 90 %. Ďalej ako 10 km býva 600 z 1 000, teda 60 % (test v `tests/test_compute.py`).
+
+U7 meria niečo iné ako U2. Pri pediatroch sú Medzilaborce podľa U2 druhé najlepšie (78. zo 79), a predsa 10,1 % detí tam má najbližšieho pediatra ďalej ako 10 km. Krupina je podľa U2 najhoršia a zároveň má ďalej ako 10 km 21,2 % detí (register k 1. 10. 2026).
 
 ### U6: pracoviská
 
@@ -368,6 +377,32 @@ WHERE vysledok IN ('WARN', 'FAIL')
 ORDER BY krok, kod;
 ```
 
+**11. Obce s vlastnou ambulanciou, ktorých referenčný bod je od nej ďaleko** (kontrola V5.6). Pred zmenou referenčného bodu ich bolo 172, teraz má byť zoznam takmer prázdny.
+
+```sql
+WITH posledny AS (SELECT snapshot_id FROM snapshot ORDER BY stav_k DESC LIMIT 1)
+SELECT u.typ, ob.nazov AS obec, ob.ref_zdroj, ROUND(u.najblizsia_km, 1) AS najblizsia_km, u.pocet_v_obci
+FROM ukazovatel_obec u
+JOIN posledny USING (snapshot_id)
+JOIN obec ob ON ob.obec_kod = u.obec_kod
+WHERE u.pocet_v_obci > 0 AND u.najblizsia_km > 2
+ORDER BY u.najblizsia_km DESC;
+```
+
+**12. U7: okresy s najväčším podielom detí ďalej ako 10 km od pediatra.** Pre dospelých zmeň `'VLDD'` na `'VLD'`. Pre porovnanie s U2 je pridané aj poradie.
+
+```sql
+WITH posledny AS (SELECT snapshot_id FROM snapshot ORDER BY stav_k DESC LIMIT 1)
+SELECT o.nazov AS okres, ROUND(100 * u.podiel_nad_5km, 1) AS percento_nad_5km,
+       ROUND(100 * u.podiel_nad_10km, 1) AS percento_nad_10km, u.na_10k, u.poradie AS poradie_u2
+FROM ukazovatel_okres u
+JOIN posledny USING (snapshot_id)
+JOIN okres o ON o.okres_kod = u.okres_kod
+WHERE u.typ = 'VLDD'
+ORDER BY u.podiel_nad_10km DESC
+LIMIT 10;
+```
+
 ## 7. Slovníček
 
 | Pojem | Význam |
@@ -378,7 +413,7 @@ ORDER BY krok, kod;
 | cache | uložené odpovede Nominatimu (`data/cache/`). Tá istá adresa sa druhýkrát nepýta. |
 | fixtures | umelé testovacie dáta v `pipeline/fixtures.py` |
 | OK / INFO / WARN / FAIL | výsledok kontroly: v poriadku, informácia, upozornenie, chyba (zastaví krok) |
-| referenčný bod obce | bod v strede územia obce, z ktorého sa merajú vzdialenosti |
+| referenčný bod obce | bod sídla obce zo ZBGIS, z ktorého sa merajú vzdialenosti |
 | menovateľ | počet obyvateľov, ktorým sa delí pri prepočte na 10 000 |
 | medián | stredná hodnota zoradeného zoznamu |
 | haversine | vzorec na vzdušnú vzdialenosť po povrchu Zeme |

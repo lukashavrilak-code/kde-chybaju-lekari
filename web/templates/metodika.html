@@ -12,6 +12,9 @@
 {% for typ in typy %}
     <tr><td>Ambulancie: {{ nazvy_typov[typ]|lower }}</td><td class="cislo">{{ pocty[typ]|cislo }}</td></tr>
     <tr><td>Pracoviská (<a href="#u6">U6</a>): {{ nazvy_typov[typ]|lower }}</td><td class="cislo">{{ pracoviska[typ]|cislo }}</td></tr>
+{% for km in podiel_nad_km %}
+    <tr><td>Podiel {{ menovatele[typ] }} ďalej ako {{ km }} km od ambulancie (<a href="#u7">U7</a>): {{ nazvy_typov[typ]|lower }}</td><td class="cislo">{{ vzdialenost_sr[typ][km|string]|percento }}</td></tr>
+{% endfor %}
 {% endfor %}
     <tr><td>Záznamy skryté na žiadosť</td><td class="cislo">{{ vylucene|cislo }}</td></tr>
 {% for presnost, podiel in presnost.items() %}

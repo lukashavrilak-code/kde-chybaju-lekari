@@ -10,7 +10,7 @@ Všetky príkazy spúšťaj v priečinku projektu s aktivovaným prostredím (`.
    [projekt]
    kontakt_email = "..."
    ```
-3. Stiahni hranice obcí ZBGIS do `data/raw/zbgis/` (O7).
+3. Stiahni hranice obcí ZBGIS do `data/raw/zbgis/` (O7). Geografické názvy ZBGIS (`https://opendata.skgeodesy.sk/static/ZBGIS/gn/gn_gpkg.zip`) rozbaľ do `data/raw/zbgis/gn/`. Body sídiel z nich sú referenčné body obcí (O18).
 4. Ručne exportuj zo STATdata tabuľku om7006rr (pohlavie Spolu, všetky obce, rok podľa `[obyvatelia] rok`) do dvoch súborov: `data/raw/statdata/om7006rr_0-17.csv` a `data/raw/statdata/om7006rr_18plus.csv`. Automatické sťahovanie je podľa podmienok STATdata zakázané. Pri novom roku uprav v `config.toml` `rok`, `stav_k` a kontrolné súčty `kontrola_deti_sr` a `kontrola_spolu_sr`. Windows niekedy skryje príponu a vznikne `.csv.csv`, vtedy súbor premenuj.
 5. Súbor NCZI (`[nczi] url`) si pipeline stiahne sama pri prvom `python -m pipeline nczi` do `data/raw/nczi/`. Keď NCZI zverejní nový rok, uprav `url`, `rok`, `referencny_datum` a `kontrola_sr` a spusti `python -m pipeline nczi --force`.
 

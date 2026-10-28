@@ -6,7 +6,7 @@ from datetime import datetime
 import geopandas as gpd
 import openpyxl
 from pyproj import Transformer
-from shapely.geometry import box
+from shapely.geometry import Point, box
 
 from .config import ROOT
 from .files import write_csv_rows
@@ -56,6 +56,16 @@ AMBULANCIE = [
 REGISTER_HEADER = ["ico", "pzs_kod", "nazov_pzs", "Obec", "PSC", "Ulica cislo OU", "Obec OU", "PSC OU",
                    "Platnost_od", "Platnost_do"]
 
+SIDLA = [
+    ("900002", "enkláva - nezobrazuje sa", 1, 1, 6500, 6500),
+    ("900001", "obec", 0, 0, 1500, 1500),
+    ("900002", "obec", 0, 1, 1500, 1500),
+    ("900003", "okresné mesto", 1, 0, 2000, 2000),
+    ("900004", "obec", 1, 0, 6000, 6000),
+    ("900006", "obec", 2, 1, 1500, 6500),
+    ("999999", "hlavné mesto", 0, 0, 4000, 4000),
+]
+
 NCZI = {"T2": ("Slovenská republika", 9, 3), "T2_1": ("Testovací kraj", 7, 2), "T2_2": ("Vzorový kraj", 2, 1)}
 NCZI_HEADER = ["Druh odborného útvaru - výstup", "Kód odborného zamerania útvaru", "Odborné zameranie útvaru",
                "Počet útvarov", "Počet pracovných miest - Lekári"]
@@ -76,6 +86,7 @@ def apply(cfg):
     cfg["register"]["min_kb"] = 0
     cfg["hranice"]["subor"] = f"{BASE}/raw/zbgis/obce.gpkg"
     cfg["hranice"]["vrstva"] = ""
+    cfg["hranice"]["sidla"]["subor"] = f"{BASE}/raw/zbgis/gn.gpkg"
     values = population().values()
     cfg["obyvatelia"].update({
         "subor_deti": f"{BASE}/raw/statdata/om7006rr_0-17.csv",
@@ -119,6 +130,14 @@ def write_boundaries(to_local):
     target = path("raw", "zbgis", "obce.gpkg")
     target.parent.mkdir(parents=True, exist_ok=True)
     gpd.GeoDataFrame(rows, crs=5514).to_file(target, driver="GPKG")
+
+
+def write_settlements(to_local):
+    rows = []
+    for kod, kategoria, column, row, dx, dy in SIDLA:
+        minx, miny, _, _ = cell_box(to_local, column, row).bounds
+        rows.append({"IDN4": kod, "KATEGORIA": kategoria, "geometry": Point(minx + dx, miny + dy)})
+    gpd.GeoDataFrame(rows, crs=5514).to_crs(8353).to_file(path("raw", "zbgis", "gn.gpkg"), layer="GNO", driver="GPKG")
 
 
 def sk_number(value, separator):
@@ -234,6 +253,7 @@ def prepare():
     to_local = Transformer.from_crs(4326, 5514, always_xy=True)
     to_wgs = Transformer.from_crs(5514, 4326, always_xy=True)
     write_boundaries(to_local)
+    write_settlements(to_local)
     write_population()
     write_nczi()
     write_geocoding(to_local, to_wgs)

@@ -34,6 +34,32 @@ def reference_points(geometries):
     return points
 
 
+def read_settlements(cfg):
+    settings = cfg["hranice"]["sidla"]
+    path = ROOT / settings["subor"]
+    if not path.exists():
+        raise PipelineError(f"Chýba súbor sídiel ZBGIS {settings['subor']} (docs/runbook.md, Prvé nastavenie).")
+    frame = gpd.read_file(path, layer=settings["vrstva"] or None)
+    frame = frame[~frame[settings["stlpec_kategoria"]].isin(settings["vynechat_kategorie"])].copy()
+    frame["obec_kod"] = frame[settings["stlpec_kod"]].map(norm_code)
+    return path, frame[["obec_kod", "geometry"]]
+
+
+def settlement_points(obce, settlements):
+    points = settlements.to_crs(obce.crs).drop_duplicates("obec_kod").set_index("obec_kod").geometry
+    centers = reference_points(obce.geometry)
+    chosen, sources = [], []
+    for kod, area, center in zip(obce["obec_kod"], obce.geometry, centers):
+        point = points.get(kod)
+        if point is not None and area.covers(point):
+            chosen.append(point)
+            sources.append("sidlo")
+        else:
+            chosen.append(center)
+            sources.append("stred")
+    return gpd.GeoSeries(chosen, index=obce.index, crs=obce.crs), pd.Series(sources, index=obce.index)
+
+
 def read_boundaries(cfg, checks):
     settings = cfg["hranice"]
     path = ROOT / settings["subor"]
@@ -162,9 +188,15 @@ def build_areas(cfg, con):
     checks.done()
 
     obce = obce.merge(population, left_on="obec_kod", right_index=True, how="left")
-    reference = reference_points(obce.geometry).to_crs(4326)
+    settlements_path, settlements = read_settlements(cfg)
+    points, sources = settlement_points(obce, settlements)
+    fallback = obce.loc[sources == "stred", "obec_nazov"]
+    checks.check("V3.9", fallback.empty, "každá obec má bod sídla zo ZBGIS vo svojom území (inak sa použije geometrický stred)",
+                 f"{len(obce) - len(fallback)} z {len(obce)}", "WARN", detail=", ".join(fallback.head(40)))
+    reference = points.to_crs(4326)
     obce["ref_lat"] = reference.y.round(5)
     obce["ref_lon"] = reference.x.round(5)
+    obce["ref_zdroj"] = sources
 
     okresy = obce.dissolve(
         by="okres_kod",
@@ -186,10 +218,10 @@ def build_areas(cfg, con):
 
     con.execute("DELETE FROM obec")
     con.executemany(
-        "INSERT INTO obec (obec_kod, nazov, okres_kod, kraj_kod, ref_lat, ref_lon, obyv_spolu, obyv_deti, obyv_dospeli) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO obec (obec_kod, nazov, okres_kod, kraj_kod, ref_lat, ref_lon, ref_zdroj, obyv_spolu, obyv_deti, obyv_dospeli) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
-            (r.obec_kod, r.obec_nazov, r.okres_kod, r.kraj_kod, r.ref_lat, r.ref_lon,
+            (r.obec_kod, r.obec_nazov, r.okres_kod, r.kraj_kod, r.ref_lat, r.ref_lon, r.ref_zdroj,
              float(r.obyv_spolu), float(r.obyv_deti), float(r.obyv_dospeli))
             for r in obce.itertuples()
         ],
@@ -205,6 +237,7 @@ def build_areas(cfg, con):
         ],
     )
     save_source(con, "zbgis", boundaries_path)
+    save_source(con, "zbgis_sidla", settlements_path)
     stav_k = cfg["obyvatelia"]["stav_k"] or None
     save_source(con, "statdata_deti", population_paths["obyv_deti"], stav_k)
     save_source(con, "statdata_dospeli", population_paths["obyv_dospeli"], stav_k)

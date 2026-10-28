@@ -16,6 +16,11 @@
 {% else %}
   <p class="poznamka">Zobrazujeme ambulancie všeobecných lekárov pre dospelých. Pediatrov doplníme po overení kódu odbornosti v registri.</p>
 {% endif %}
+  <fieldset class="prepinac">
+    <legend>Mapa</legend>
+    <label><input type="radio" name="vrstva" value="okresy" checked> Okresy</label>
+    <label><input type="radio" name="vrstva" value="obce"> Obce podľa vzdialenosti</label>
+  </fieldset>
   <div class="hladanie">
     <label for="hladat">Vyhľadať obec</label>
     <input id="hladat" type="search" autocomplete="off" spellcheck="false" placeholder="napr. Rožňava"
@@ -31,6 +36,7 @@
   <aside id="panel" class="panel" aria-live="polite">
     <h2>Ako čítať mapu</h2>
     <p>Farba okresu ukazuje počet ambulancií všeobecných lekárov na 10&nbsp;000 obyvateľov príslušnej vekovej skupiny. Tmavšia farba znamená menej ambulancií.</p>
+    <p>V režime „Obce podľa vzdialenosti“ je každá obec bod. Tmavší bod znamená, že najbližšia ambulancia je ďalej.</p>
     <p>Kliknite na okres alebo vyhľadajte obec. Pre obec ukážeme vzdialenosť k najbližšej ambulancii a zoznam ambulancií v okolí.</p>
   </aside>
 </div>

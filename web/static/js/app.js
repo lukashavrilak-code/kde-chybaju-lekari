@@ -1,23 +1,24 @@
-import { VrstvaOkolia, VrstvaOkresov, vykresliLegendu, vytvorMapu } from "./map.js";
+import { PALETA_VZDIALENOST, VrstvaObci, VrstvaOkolia, VrstvaOkresov, vykresliLegendu, vytvorMapu } from "./map.js";
 import { vykresliChybu, vykresliObec, vykresliOkres } from "./panel.js";
 import { nastavHladanie } from "./search.js";
-import { bezDiakritiky, haversineKm, nacitajJson } from "./util.js";
+import { bezDiakritiky, formatCislo, haversineKm, nacitajJson } from "./util.js";
 
 const panel = document.getElementById("panel");
 const legenda = document.getElementById("legenda");
 const vstup = document.getElementById("hladat");
 const uvodPanela = Array.from(panel.childNodes, (uzol) => uzol.cloneNode(true));
-const stav = { typ: null };
+const stav = { typ: null, vrstva: "okresy" };
 let meta = null;
 let okresy = null;
 let vrstvaOkresov = null;
+let vrstvaObci = null;
 let vrstvaOkolia = null;
 let zvyrazniKartu = null;
 let indexPromise = null;
 
 function citajHash() {
   const parametre = new URLSearchParams(location.hash.slice(1));
-  return { typ: parametre.get("typ"), obec: parametre.get("obec"), okres: parametre.get("okres") };
+  return { typ: parametre.get("typ"), obec: parametre.get("obec"), okres: parametre.get("okres"), vrstva: parametre.get("vrstva") };
 }
 
 function zapisHash(zmena) {
@@ -57,13 +58,30 @@ function synchronizujPrepinac() {
   document.querySelectorAll('input[name="typ"]').forEach((radio) => {
     radio.checked = radio.value === stav.typ;
   });
+  document.querySelectorAll('input[name="vrstva"]').forEach((radio) => {
+    radio.checked = radio.value === stav.vrstva;
+  });
 }
 
-function obnovLegendu() {
+async function obnovVrstvy() {
   const prefix = stav.typ.toLowerCase();
+  const nazovTypu = meta.nazvy_typov[stav.typ].toLowerCase();
+  if (stav.vrstva === "obce") {
+    const obce = await indexObci();
+    vrstvaObci.zobraz(obce, stav.typ, meta.legenda.vzdialenost_km);
+    vykresliLegendu(
+      legenda,
+      `Vzdušná vzdialenosť zo stredu obce k najbližšej ambulancii v km: ${nazovTypu}`,
+      meta.legenda.vzdialenost_km,
+      obce.map((obec) => obec[`${prefix}_km`]),
+      { paleta: PALETA_VZDIALENOST, format: formatCislo, poznamka: "Tmavšia farba = ďalej od ambulancie. V zátvorke je počet obcí." },
+    );
+    return;
+  }
+  vrstvaObci.skry();
   vykresliLegendu(
     legenda,
-    `Ambulancie na 10 000 ${meta.menovatele[stav.typ]}: ${meta.nazvy_typov[stav.typ].toLowerCase()}`,
+    `Ambulancie na 10 000 ${meta.menovatele[stav.typ]}: ${nazovTypu}`,
     meta.legenda[stav.typ],
     okresy.features.map((feature) => feature.properties[`${prefix}_na10k`]),
   );
@@ -82,7 +100,7 @@ async function zobrazObec(obec) {
     pocitadla[typ] = zaznam.index + 1;
   }
   const zoznamTypu = vsetky.filter((zaznam) => zaznam.ambulancia.typ === stav.typ);
-  vrstvaOkresov.obnov({ vybrany: obec.okres_kod, priehladne: true });
+  vrstvaOkresov.obnov({ vybrany: obec.okres_kod, priehladne: true, lenObrys: stav.vrstva === "obce" });
   const vyber = (index) => {
     vrstvaOkolia.zvyrazni(index);
     if (zvyrazniKartu) zvyrazniKartu(index);
@@ -95,8 +113,9 @@ async function zobrazObec(obec) {
 async function aplikujStav() {
   const hash = citajHash();
   stav.typ = platnyTyp(hash.typ);
+  stav.vrstva = hash.vrstva === "obce" ? "obce" : "okresy";
   synchronizujPrepinac();
-  obnovLegendu();
+  await obnovVrstvy();
   if (hash.obec) {
     const obec = (await indexObci()).find((o) => o.kod === hash.obec);
     if (obec) {
@@ -107,7 +126,7 @@ async function aplikujStav() {
   vrstvaOkolia.vycisti();
   zvyrazniKartu = null;
   const okres = hash.okres ? okresPodlaKodu(hash.okres) : null;
-  vrstvaOkresov.obnov({ vybrany: okres ? okres.properties.kod : null, priehladne: false });
+  vrstvaOkresov.obnov({ vybrany: okres ? okres.properties.kod : null, priehladne: false, lenObrys: stav.vrstva === "obce" });
   if (okres) {
     vykresliOkres(panel, okres, stav.typ, meta, okresy.features.length);
   } else {
@@ -129,9 +148,13 @@ async function start() {
     hranice: () => meta.legenda[stav.typ],
     priKliknuti: (feature) => zapisHash({ okres: feature.properties.kod, obec: null }),
   });
+  vrstvaObci = new VrstvaObci(mapa, (obec) => zapisHash({ obec: obec.kod, okres: null }));
   vrstvaOkolia = new VrstvaOkolia(mapa);
   document.querySelectorAll('input[name="typ"]').forEach((radio) => {
     radio.addEventListener("change", () => zapisHash({ typ: radio.value }));
+  });
+  document.querySelectorAll('input[name="vrstva"]').forEach((radio) => {
+    radio.addEventListener("change", () => zapisHash({ vrstva: radio.value === "obce" ? "obce" : null }));
   });
   nastavHladanie(vstup, document.getElementById("navrhy"), indexObci, (obec) => zapisHash({ obec: obec.kod, okres: null }));
   window.addEventListener("hashchange", () => aplikujStav().catch(zobrazChybu));

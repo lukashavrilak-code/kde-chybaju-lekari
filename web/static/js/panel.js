@@ -1,4 +1,4 @@
-import { el, formatCislo, formatDatum, formatKm, formatNa10k } from "./util.js";
+import { el, formatCislo, formatDatum, formatKm, formatNa10k, formatPercento } from "./util.js";
 
 const PRESNOST = {
   adresa: "presná adresa",
@@ -29,6 +29,9 @@ export function vykresliOkres(panel, okres, typ, meta, pocetOkresov) {
     ...riadok("Pracoviská (rovnaké IČO a adresa)", formatCislo(p[`${prefix}_pracoviska`]), "u6"),
     ...riadok(`Na 10 000 ${meta.menovatele[typ]}`, formatNa10k(p[`${prefix}_na10k`]), "u2"),
     ...riadok("Poradie (1 = najmenej)", `${p[`${prefix}_poradie`]}. z ${pocetOkresov}`, "u5"),
+    ...meta.podiel_nad_km.flatMap((km) =>
+      riadok(`Podiel ${meta.menovatele[typ]} ďalej ako ${km} km`, formatPercento(p[`${prefix}_nad${km}`]), "u7"),
+    ),
   );
   const casti = [
     el("h2", { text: `Okres ${p.nazov}` }),

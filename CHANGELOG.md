@@ -19,3 +19,4 @@ Verzia pipeline: MAJOR.MINOR.PATCH. Zmena definície ukazovateľa zvyšuje MINOR
 - Ulica „null“ z registra sa berie ako prázdna. Myslenice → Pezinok.
 - Cache geokódovania mimo Gitu. Príkaz `zaloha` (cache, snapshoty, ručné zdroje do OneDrive/na disk) spúšťaný mesačne z Plánovača úloh. Upozornenie NCZI iba pri pomere mimo 0,8 – 1,6. Text „stredný stav 2025“ pri obyvateľoch.
 - `serve --host 0.0.0.0`: náhľad webu z telefónu v domácej sieti. Sprievodca projektom (`docs/sprievodca.md`). Úloha Plánovača úloh sa spustí aj na batérii a dobehne zmeškaný termín.
+- Referenčný bod obce je bod sídla zo ZBGIS (Geografické názvy, vrstva GNO), nie geometrický stred územia (O18). Nový ukazovateľ U7: podiel obyvateľov okresu ďalej ako 5 a 10 km od ambulancie (panel okresu, CSV, metodika). Na mape prepínač „Obce podľa vzdialenosti“. Kontroly V3.9 a V5.6.

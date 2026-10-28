@@ -1,9 +1,9 @@
 import math
 
 import geopandas as gpd
-from shapely.geometry import box
+from shapely.geometry import Point, box
 
-from pipeline.areas import norm_name
+from pipeline.areas import norm_name, settlement_points
 from pipeline.compute import haversine_km
 from pipeline.geocode import (
     Geocoder,
@@ -27,6 +27,15 @@ def test_haversine_one_degree_latitude():
 
 def test_norm_name_ignores_diacritics_and_dashes():
     assert norm_name("Bratislava - Petržalka") == norm_name("Bratislava-Petržalka") == "bratislava petrzalka"
+
+
+def test_settlement_point_must_lie_in_own_obec_else_center():
+    obce = gpd.GeoDataFrame({"obec_kod": ["1", "2", "3"]}, geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10), box(20, 0, 30, 10)],
+                            crs=5514)
+    sidla = gpd.GeoDataFrame({"obec_kod": ["1", "2", "9"]}, geometry=[Point(2, 3), Point(5, 5), Point(25, 5)], crs=5514)
+    points, sources = settlement_points(obce, sidla)
+    assert list(sources) == ["sidlo", "stred", "stred"]
+    assert [(p.x, p.y) for p in points] == [(2, 3), (15, 5), (25, 5)]
 
 
 def test_precision_from_place_rank():

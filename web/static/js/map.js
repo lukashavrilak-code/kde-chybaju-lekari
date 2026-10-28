@@ -1,6 +1,7 @@
-import { el, formatNa10k } from "./util.js";
+import { el, formatKm, formatNa10k } from "./util.js";
 
 const PALETA = ["#104281", "#1c5cab", "#2a78d6", "#5598e7", "#86b6ef"];
+export const PALETA_VZDIALENOST = [...PALETA].reverse();
 const BEZ_UDAJOV = "#c3c2b7";
 const SLOVENSKO = [[47.73, 16.83], [49.61, 22.57]];
 
@@ -11,9 +12,9 @@ export function triedaHodnoty(hodnota, hranice) {
   return trieda;
 }
 
-export function farbaHodnoty(hodnota, hranice) {
+export function farbaHodnoty(hodnota, hranice, paleta = PALETA) {
   const trieda = triedaHodnoty(hodnota, hranice);
-  return trieda < 0 ? BEZ_UDAJOV : PALETA[trieda];
+  return trieda < 0 ? BEZ_UDAJOV : paleta[trieda];
 }
 
 export function vytvorMapu(idKontajnera, meta) {
@@ -31,6 +32,7 @@ export class VrstvaOkresov {
     this.nastavenia = nastavenia;
     this.vybrany = null;
     this.priehladne = false;
+    this.lenObrys = false;
     this.vrstva = L.geoJSON(geojson, {
       style: (feature) => this.styl(feature),
       onEachFeature: (feature, layer) => {
@@ -46,11 +48,15 @@ export class VrstvaOkresov {
 
   styl(feature) {
     const vybrany = this.vybrany === feature.properties.kod;
+    let vypln = this.priehladne ? 0.3 : 0.85;
+    if (this.lenObrys) vypln = 0;
+    let obrys = this.lenObrys ? "#52514e" : "#ffffff";
+    if (vybrany) obrys = "#0b0b0b";
     return {
-      color: vybrany ? "#0b0b0b" : "#ffffff",
+      color: obrys,
       weight: vybrany ? 3 : 1,
       fillColor: farbaHodnoty(this.hodnota(feature), this.nastavenia.hranice()),
-      fillOpacity: this.priehladne ? 0.3 : 0.85,
+      fillOpacity: vypln,
     };
   }
 
@@ -63,9 +69,10 @@ export class VrstvaOkresov {
     );
   }
 
-  obnov({ vybrany, priehladne }) {
+  obnov({ vybrany, priehladne, lenObrys = false }) {
     this.vybrany = vybrany;
     this.priehladne = priehladne;
+    this.lenObrys = lenObrys;
     this.vrstva.setStyle((feature) => this.styl(feature));
     this.vrstva.eachLayer((layer) => {
       if (layer.feature.properties.kod === vybrany) layer.bringToFront();
@@ -78,6 +85,37 @@ export class VrstvaOkresov {
       if (layer.feature.properties.kod === kod) vysledok = layer.getBounds();
     });
     return vysledok;
+  }
+}
+
+export class VrstvaObci {
+  constructor(mapa, priKliknuti) {
+    this.mapa = mapa;
+    this.priKliknuti = priKliknuti;
+    this.skupina = L.layerGroup();
+    this.body = [];
+    this.kluc = null;
+  }
+
+  zobraz(obce, typ, hranice) {
+    this.kluc = `${typ.toLowerCase()}_km`;
+    if (!this.body.length) {
+      for (const obec of obce) {
+        const bod = L.circleMarker([obec.lat, obec.lon], { radius: 4, weight: 0.5, color: "#ffffff", fillOpacity: 0.9 });
+        bod.bindTooltip(() => el("div", { text: `${obec.nazov}: najbližšia ambulancia ${formatKm(obec[this.kluc])}` }));
+        bod.on("click", () => this.priKliknuti(obec));
+        bod.addTo(this.skupina);
+        this.body.push([obec, bod]);
+      }
+    }
+    for (const [obec, bod] of this.body) {
+      bod.setStyle({ fillColor: farbaHodnoty(obec[this.kluc], hranice, PALETA_VZDIALENOST) });
+    }
+    this.skupina.addTo(this.mapa);
+  }
+
+  skry() {
+    this.skupina.remove();
   }
 }
 
@@ -139,7 +177,10 @@ export class VrstvaOkolia {
   }
 }
 
-export function vykresliLegendu(kontajner, nadpis, hranice, hodnoty) {
+export function vykresliLegendu(kontajner, nadpis, hranice, hodnoty, moznosti = {}) {
+  const paleta = moznosti.paleta || PALETA;
+  const format = moznosti.format || formatNa10k;
+  const poznamka = moznosti.poznamka || "Tmavšia farba = menej ambulancií. V zátvorke je počet okresov.";
   const pocty = new Array(hranice.length + 1).fill(0);
   for (const hodnota of hodnoty) {
     const trieda = triedaHodnoty(hodnota, hranice);
@@ -148,13 +189,13 @@ export function vykresliLegendu(kontajner, nadpis, hranice, hodnoty) {
   const polozky = [el("span", { trieda: "titulok", text: nadpis })];
   for (let trieda = 0; trieda <= hranice.length; trieda += 1) {
     let popis;
-    if (trieda === 0) popis = `menej ako ${formatNa10k(hranice[0])}`;
-    else if (trieda === hranice.length) popis = `${formatNa10k(hranice[trieda - 1])} a viac`;
-    else popis = `${formatNa10k(hranice[trieda - 1])} – ${formatNa10k(hranice[trieda])}`;
+    if (trieda === 0) popis = `menej ako ${format(hranice[0])}`;
+    else if (trieda === hranice.length) popis = `${format(hranice[trieda - 1])} a viac`;
+    else popis = `${format(hranice[trieda - 1])} – ${format(hranice[trieda])}`;
     const vzorka = el("span", { trieda: "vzorka", atributy: { "aria-hidden": "true" } });
-    vzorka.style.backgroundColor = PALETA[trieda];
+    vzorka.style.backgroundColor = paleta[trieda];
     polozky.push(el("span", { trieda: "polozka" }, vzorka, el("span", { text: `${popis} (${pocty[trieda]})` })));
   }
-  polozky.push(el("span", { trieda: "polozka", text: "Tmavšia farba = menej ambulancií. V zátvorke je počet okresov." }));
+  polozky.push(el("span", { trieda: "polozka", text: poznamka }));
   kontajner.replaceChildren(...polozky);
 }

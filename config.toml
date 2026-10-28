@@ -64,6 +64,13 @@ okres_nazov = "NM3"
 kraj_kod = "IDN2"
 kraj_nazov = "NM2"
 
+[hranice.sidla]
+subor = "data/raw/zbgis/gn/gn.gpkg"
+vrstva = "GNO"
+stlpec_kod = "IDN4"
+stlpec_kategoria = "KATEGORIA"
+vynechat_kategorie = ["enkláva - nezobrazuje sa"]
+
 [obyvatelia]
 zdroj = "Štatistický úrad SR – STATdata, tabuľka om7006rr"
 atribucia = "Zdroj: Štatistický úrad SR, CC BY 4.0, www.statistics.sk"
@@ -99,6 +106,7 @@ odstranit_predpony = ["ul.", "ulica", "ZS", "Zdravotné stredisko"]
 
 [vypocty]
 polomery_km = [10, 20]
+podiel_nad_km = [5, 10]
 max_zoznam_km = 20
 
 [ocakavane]
@@ -118,6 +126,7 @@ zmena_sr_fail = 0.15
 zmena_okres_min = 3
 zmena_okres_podiel = 0.25
 odlahla_hodnota_nasobok = 3.0
+vzdialenost_v_obci_km = 2.0
 
 [validacia.ocakavane_pocty]
 VLD = 2435

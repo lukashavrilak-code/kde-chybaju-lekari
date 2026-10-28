@@ -10,6 +10,7 @@ TYPES = ("VLD", "VLDD")
 DENOMINATOR = {"VLD": "obyv_dospeli", "VLDD": "obyv_deti"}
 HISTORY_COLUMNS = ["stav_k", "okres_kod", "typ", "pocet", "pocet_pracovisk"]
 WORKPLACE = ["ico", "adresa_kluc"]
+FAR_COLUMNS = ["podiel_nad_5km", "podiel_nad_10km"]
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
@@ -57,6 +58,18 @@ def obec_indicators(amb, obce, typ, radii):
     return result
 
 
+def distance_shares(obec_rows, obce, typ, limits):
+    column = DENOMINATOR[typ]
+    rows = obec_rows.merge(obce[["obec_kod", "okres_kod", column]], on="obec_kod")
+    distance = rows["najblizsia_km"].fillna(np.inf)
+    population = rows.groupby("okres_kod")[column].sum()
+    result = pd.DataFrame({"okres_kod": population.index, "typ": typ})
+    for name, km in zip(FAR_COLUMNS, limits):
+        far = rows[column].where(distance > km, 0).groupby(rows["okres_kod"]).sum()
+        result[name] = (far / population).round(4).values
+    return result
+
+
 def check_history(cfg, checks, stav_k, current, confirmed):
     rules = cfg["validacia"]
     rows = read_csv_rows(project_path(cfg, "history") / "pocty_okresy.csv")
@@ -101,6 +114,10 @@ def compute(cfg, con, snapshot, confirmed=False):
 
     by_okres = pd.concat([okres_indicators(amb, okresy, typ) for typ in TYPES], ignore_index=True)
     by_obec = pd.concat([obec_indicators(amb, obce, typ, radii) for typ in TYPES], ignore_index=True)
+    limits = cfg["vypocty"]["podiel_nad_km"]
+    shares = pd.concat([distance_shares(by_obec[by_obec["typ"] == typ], obce, typ, limits) for typ in TYPES], ignore_index=True)
+    by_okres = by_okres.merge(shares, on=["okres_kod", "typ"], how="left")
+    names = obce.set_index("obec_kod")["nazov"]
 
     for typ in TYPES:
         part = by_okres[by_okres["typ"] == typ]
@@ -117,14 +134,19 @@ def compute(cfg, con, snapshot, confirmed=False):
         inconsistent = ((rows["najblizsia_km"] <= radii[0]) != (rows["pocet_10km"] >= 1)).sum()
         checks.check("V5.5", inconsistent == 0, f"najbližšia ambulancia a počet do {radii[0]} km sú konzistentné ({typ})",
                      f"{int(inconsistent)} obcí")
+        limit_km = rules["vzdialenost_v_obci_km"]
+        own = rows[(rows["pocet_v_obci"] > 0) & (rows["najblizsia_km"] > limit_km)]
+        checks.info("V5.6", f"obce s ambulanciou {typ} v obci, ale referenčný bod je od najbližšej ďalej ako {limit_km:g} km",
+                    len(own), detail=", ".join(names[own["obec_kod"]].head(40)))
 
     check_history(cfg, checks, stav_k, by_okres, confirmed)
 
     con.execute("DELETE FROM ukazovatel_okres WHERE snapshot_id = ?", (sid,))
     con.executemany(
-        "INSERT INTO ukazovatel_okres (snapshot_id, okres_kod, typ, pocet, pocet_pracovisk, na_10k, poradie) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [(sid, r.okres_kod, r.typ, int(r.pocet), int(r.pocet_pracovisk), float(r.na_10k), int(r.poradie))
+        "INSERT INTO ukazovatel_okres (snapshot_id, okres_kod, typ, pocet, pocet_pracovisk, na_10k, poradie, podiel_nad_5km, "
+        "podiel_nad_10km) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [(sid, r.okres_kod, r.typ, int(r.pocet), int(r.pocet_pracovisk), float(r.na_10k), int(r.poradie),
+          float(r.podiel_nad_5km), float(r.podiel_nad_10km))
          for r in by_okres.itertuples()],
     )
     con.execute("DELETE FROM ukazovatel_obec WHERE snapshot_id = ?", (sid,))
