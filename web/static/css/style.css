@@ -171,7 +171,9 @@ h3 { font-size: 1.05rem; }
 .tabulka .cislo { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tabulka th.cislo { white-space: normal; }
 
-.dve-tabulky { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.dve-tabulky { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.tabulka-obal { overflow-x: auto; }
+.znacka { padding: 0 2px; font-weight: 600; text-decoration: none; }
 
 .text { max-width: 760px; }
 .poznamka { font-size: 0.9rem; color: var(--text-2); }
@@ -189,7 +191,7 @@ h3 { font-size: 1.05rem; }
 .leaflet-tooltip .tooltip-nazov { font-weight: 600; }
 
 @media (max-width: 800px) {
-  .mapa-rozlozenie { grid-template-columns: minmax(0, 1fr); }
+  .mapa-rozlozenie, .dve-tabulky { grid-template-columns: minmax(0, 1fr); }
   .mapa { height: 55vh; min-height: 320px; }
   .panel { max-height: none; }
   .tabulka { font-size: 0.85rem; }

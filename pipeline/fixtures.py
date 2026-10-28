@@ -106,6 +106,7 @@ def apply(cfg):
     cfg["projekt"]["kontakt_email"] = "test@example.org"
     for insurer in cfg["web"]["poistovne"]:
         insurer["url"] = "https://example.org/vyhladavanie-lekarov"
+    cfg["web"]["mestske_okresy"] = ["902"]
     cfg["legenda"]["VLD"] = [10.0, 15.0, 20.0, 25.0]
     cfg["legenda"]["VLDD"] = [40.0, 60.0, 80.0, 100.0]
     return cfg

@@ -58,6 +58,34 @@ def obec_indicators(amb, obce, typ, radii):
     return result
 
 
+def catchment_access(amb, obce, typ, radius_km):
+    subset = amb[amb["typ"] == typ]
+    population = obce[DENOMINATOR[typ]].to_numpy(dtype=float)
+    if subset.empty:
+        return np.zeros(len(obce)), 0
+    distances = haversine_km(
+        obce["ref_lat"].values[:, None], obce["ref_lon"].values[:, None],
+        subset["lat"].values[None, :], subset["lon"].values[None, :],
+    )
+    within = (distances <= radius_km).astype(float)
+    demand = within.T @ population
+    shares = np.divide(1.0, demand, out=np.zeros_like(demand), where=demand > 0)
+    return within @ shares * 10000, int((demand > 0).sum())
+
+
+def catchment_by_okres(obec_rows, obce, typ):
+    column = DENOMINATOR[typ]
+    rows = obec_rows.merge(obce[["obec_kod", "okres_kod", column]], on="obec_kod")
+    weighted = (rows["na_10k_okolie"] * rows[column]).groupby(rows["okres_kod"]).sum()
+    rate = (weighted / rows.groupby("okres_kod")[column].sum()).round(2)
+    return pd.DataFrame({
+        "okres_kod": rate.index,
+        "typ": typ,
+        "na_10k_okolie": rate.values,
+        "poradie_okolie": rate.rank(method="min").astype(int).values,
+    })
+
+
 def distance_shares(obec_rows, obce, typ, limits):
     column = DENOMINATOR[typ]
     rows = obec_rows.merge(obce[["obec_kod", "okres_kod", column]], on="obec_kod")
@@ -113,10 +141,17 @@ def compute(cfg, con, snapshot, confirmed=False):
     checks.done()
 
     by_okres = pd.concat([okres_indicators(amb, okresy, typ) for typ in TYPES], ignore_index=True)
-    by_obec = pd.concat([obec_indicators(amb, obce, typ, radii) for typ in TYPES], ignore_index=True)
+    catchment_km = cfg["vypocty"]["spadova_oblast_km"]
+    obec_parts, served = [], {}
+    for typ in TYPES:
+        part = obec_indicators(amb, obce, typ, radii)
+        part["na_10k_okolie"], served[typ] = catchment_access(amb, obce, typ, catchment_km)
+        obec_parts.append(part)
+    by_obec = pd.concat(obec_parts, ignore_index=True)
     limits = cfg["vypocty"]["podiel_nad_km"]
     shares = pd.concat([distance_shares(by_obec[by_obec["typ"] == typ], obce, typ, limits) for typ in TYPES], ignore_index=True)
-    by_okres = by_okres.merge(shares, on=["okres_kod", "typ"], how="left")
+    catchment = pd.concat([catchment_by_okres(by_obec[by_obec["typ"] == typ], obce, typ) for typ in TYPES], ignore_index=True)
+    by_okres = by_okres.merge(shares, on=["okres_kod", "typ"], how="left").merge(catchment, on=["okres_kod", "typ"], how="left")
     names = obce.set_index("obec_kod")["nazov"]
 
     for typ in TYPES:
@@ -138,24 +173,31 @@ def compute(cfg, con, snapshot, confirmed=False):
         own = rows[(rows["pocet_v_obci"] > 0) & (rows["najblizsia_km"] > limit_km)]
         checks.info("V5.6", f"obce s ambulanciou {typ} v obci, ale referenčný bod je od najbližšej ďalej ako {limit_km:g} km",
                     len(own), detail=", ".join(names[own["obec_kod"]].head(40)))
+        population = obce.set_index("obec_kod").loc[rows["obec_kod"], DENOMINATOR[typ]].to_numpy()
+        distributed = float((rows["na_10k_okolie"].to_numpy() * population).sum() / 10000)
+        checks.check("V5.7", abs(distributed - served[typ]) < 1e-6 * max(served[typ], 1),
+                     f"U8 rozdelí medzi obyvateľov presne všetky ambulancie {typ}, ktoré majú obyvateľov do {catchment_km} km",
+                     f"{distributed:.3f} / {served[typ]}")
+        checks.info("V5.7", f"ambulancie {typ} bez obyvateľov do {catchment_km} km (v U8 sa nepočítajú)",
+                    int((amb["typ"] == typ).sum()) - served[typ])
 
     check_history(cfg, checks, stav_k, by_okres, confirmed)
 
     con.execute("DELETE FROM ukazovatel_okres WHERE snapshot_id = ?", (sid,))
     con.executemany(
         "INSERT INTO ukazovatel_okres (snapshot_id, okres_kod, typ, pocet, pocet_pracovisk, na_10k, poradie, podiel_nad_5km, "
-        "podiel_nad_10km) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "podiel_nad_10km, na_10k_okolie, poradie_okolie) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [(sid, r.okres_kod, r.typ, int(r.pocet), int(r.pocet_pracovisk), float(r.na_10k), int(r.poradie),
-          float(r.podiel_nad_5km), float(r.podiel_nad_10km))
+          float(r.podiel_nad_5km), float(r.podiel_nad_10km), float(r.na_10k_okolie), int(r.poradie_okolie))
          for r in by_okres.itertuples()],
     )
     con.execute("DELETE FROM ukazovatel_obec WHERE snapshot_id = ?", (sid,))
     con.executemany(
-        "INSERT INTO ukazovatel_obec (snapshot_id, obec_kod, typ, najblizsia_km, pocet_v_obci, pocet_10km, pocet_20km) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO ukazovatel_obec (snapshot_id, obec_kod, typ, najblizsia_km, pocet_v_obci, pocet_10km, pocet_20km, "
+        "na_10k_okolie) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         [
             (sid, r.obec_kod, r.typ, None if pd.isna(r.najblizsia_km) else float(r.najblizsia_km),
-             int(r.pocet_v_obci), int(r.pocet_10km), int(r.pocet_20km))
+             int(r.pocet_v_obci), int(r.pocet_10km), int(r.pocet_20km), float(r.na_10k_okolie))
             for r in by_obec.itertuples()
         ],
     )

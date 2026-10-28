@@ -107,6 +107,7 @@ odstranit_predpony = ["ul.", "ulica", "ZS", "Zdravotné stredisko"]
 [vypocty]
 polomery_km = [10, 20]
 podiel_nad_km = [5, 10]
+spadova_oblast_km = 10
 max_zoznam_km = 20
 
 [ocakavane]
@@ -140,6 +141,7 @@ vzdialenost_km = [2.0, 5.0, 10.0, 15.0]
 [web]
 zastarane_po_dnoch = 60
 tile_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+mestske_okresy = ["101", "102", "103", "104", "105", "802", "803", "804", "805"]
 
 [[web.poistovne]]
 nazov = "VšZP"

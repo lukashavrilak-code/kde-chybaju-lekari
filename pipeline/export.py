@@ -19,9 +19,9 @@ ALLOWED_EXTENSIONS = {".html", ".css", ".js", ".json", ".geojson", ".csv", ".png
 SK_BOUNDS = {"lat": (47.7, 49.7), "lon": (16.8, 22.6)}
 FIRST_LOAD = ["index.html", "static/css/style.css", "data/meta.json", "data/okresy.geojson"]
 OKRES_CSV = ["okres_kod", "okres", "kraj", "typ", "pocet_ambulancii", "pocet_pracovisk", "na_10k", "menovatel", "poradie",
-             *FAR_COLUMNS, "stav_registra", "stav_obyvatelstva", "verzia_pipeline"]
+             *FAR_COLUMNS, "na_10k_okolie", "poradie_okolie", "stav_registra", "stav_obyvatelstva", "verzia_pipeline"]
 OBEC_CSV = ["obec_kod", "obec", "okres", "typ", "najblizsia_km", "pocet_v_obci", "pocet_do_10km", "pocet_do_20km",
-            "stav_registra", "verzia_pipeline"]
+            "na_10k_okolie", "stav_registra", "verzia_pipeline"]
 
 
 def pipeline_version():
@@ -76,6 +76,8 @@ def export_okresy(cfg, okresy, indicators, types, meta):
             props[f"{prefix}_poradie"] = int(row["poradie"])
             for name, km in zip(FAR_COLUMNS, cfg["vypocty"]["podiel_nad_km"]):
                 props[f"{prefix}_nad{km}"] = float(row[name])
+            props[f"{prefix}_okolie"] = float(row["na_10k_okolie"])
+            props[f"{prefix}_poradie_okolie"] = int(row["poradie_okolie"])
         geometry = feature["geometry"]
         features.append({
             "type": "Feature",
@@ -123,6 +125,7 @@ def csv_rows(okresy, obce, okres_ind, obec_ind, types, meta):
             "typ": r.typ, "pocet_ambulancii": r.pocet, "pocet_pracovisk": r.pocet_pracovisk, "na_10k": f"{r.na_10k:.2f}",
             "menovatel": DENOMINATOR_NAMES[r.typ],
             "poradie": r.poradie, "podiel_nad_5km": f"{r.podiel_nad_5km:.4f}", "podiel_nad_10km": f"{r.podiel_nad_10km:.4f}",
+            "na_10k_okolie": f"{r.na_10k_okolie:.2f}", "poradie_okolie": r.poradie_okolie,
             "stav_registra": meta["stav_registra"], "stav_obyvatelstva": meta["stav_obyvatelstva"],
             "verzia_pipeline": meta["verzia_pipeline"],
         })
@@ -134,21 +137,26 @@ def csv_rows(okresy, obce, okres_ind, obec_ind, types, meta):
             "obec_kod": r.obec_kod, "obec": names.at[r.obec_kod, "nazov"], "okres": okresy.at[okres_kod, "nazov"],
             "typ": r.typ, "najblizsia_km": "" if pd.isna(r.najblizsia_km) else f"{r.najblizsia_km:.2f}",
             "pocet_v_obci": r.pocet_v_obci, "pocet_do_10km": r.pocet_10km, "pocet_do_20km": r.pocet_20km,
+            "na_10k_okolie": f"{r.na_10k_okolie:.2f}",
             "stav_registra": meta["stav_registra"], "verzia_pipeline": meta["verzia_pipeline"],
         })
     return okres_rows, obec_rows
 
 
-def rankings(okresy, okres_ind, types):
+def rankings(okresy, okres_ind, types, mestske):
     result = {}
     for typ in types:
         part = okres_ind[okres_ind["typ"] == typ].sort_values(["poradie", "okres_kod"])
         rows = [
-            {"poradie": int(r.poradie), "nazov": okresy.at[r.okres_kod, "nazov"], "kraj": okresy.at[r.okres_kod, "kraj_nazov"],
-             "pocet": int(r.pocet), "pracoviska": int(r.pocet_pracovisk), "na_10k": float(r.na_10k)}
+            {"kod": r.okres_kod, "poradie": int(r.poradie), "nazov": okresy.at[r.okres_kod, "nazov"],
+             "kraj": okresy.at[r.okres_kod, "kraj_nazov"], "pocet": int(r.pocet), "pracoviska": int(r.pocet_pracovisk),
+             "na_10k": float(r.na_10k), "okolie": float(r.na_10k_okolie), "poradie_okolie": int(r.poradie_okolie),
+             "mestsky": r.okres_kod in mestske}
             for r in part.itertuples()
         ]
-        result[typ] = {"vsetky": rows, "najhorsie": rows[:10], "najlepsie": list(reversed(rows[-10:]))}
+        by_catchment = sorted(rows, key=lambda r: (r["poradie_okolie"], r["kod"]))
+        okolie = [{**r, "poradie": r["poradie_okolie"], "na_10k": r["okolie"]} for r in by_catchment[:10]]
+        result[typ] = {"vsetky": rows, "najhorsie": rows[:10], "najlepsie": list(reversed(rows[-10:])), "najhorsie_okolie": okolie}
     return result
 
 
@@ -277,7 +285,7 @@ def export(cfg, con, snapshot):
         "stav_registra": snapshot["stav_k"],
         "stav_registra_text": format_date(snapshot["stav_k"]),
         "verzia": base["verzia_pipeline"],
-        "rebricky": rankings(okresy, okres_ind, types),
+        "rebricky": rankings(okresy, okres_ind, types, cfg["web"]["mestske_okresy"]),
         "pocty": {typ: int((amb["typ"] == typ).sum()) for typ in types},
         "pracoviska": {typ: int(okres_ind.loc[okres_ind["typ"] == typ, "pocet_pracovisk"].sum()) for typ in types},
         "popis_obyvatelstva": cfg["obyvatelia"]["popis"],
@@ -289,6 +297,7 @@ def export(cfg, con, snapshot):
         "polomery": cfg["vypocty"]["polomery_km"],
         "podiel_nad_km": cfg["vypocty"]["podiel_nad_km"],
         "vzdialenost_sr": distance_shares_sr(obce, obec_ind, types, cfg["vypocty"]["podiel_nad_km"]),
+        "spadova_oblast_km": cfg["vypocty"]["spadova_oblast_km"],
         "vylucene": excluded_count(con, sid),
     }
     pages = build_site(cfg, context, site)
@@ -312,6 +321,8 @@ def export(cfg, con, snapshot):
         "polomery_km": cfg["vypocty"]["polomery_km"],
         "podiel_nad_km": context["podiel_nad_km"],
         "vzdialenost_sr": context["vzdialenost_sr"],
+        "spadova_oblast_km": context["spadova_oblast_km"],
+        "mestske_okresy": cfg["web"]["mestske_okresy"],
         "max_zoznam_km": cfg["vypocty"]["max_zoznam_km"],
         "poistovne": [p for p in cfg["web"]["poistovne"] if p["url"]],
         "kontakt_email": cfg["projekt"]["kontakt_email"],

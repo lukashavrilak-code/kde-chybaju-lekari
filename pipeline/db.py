@@ -3,7 +3,7 @@ import sqlite3
 from .checks import PipelineError
 from .config import ROOT, project_path
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshot (
     snapshot_id     INTEGER PRIMARY KEY,
@@ -101,6 +101,8 @@ CREATE TABLE IF NOT EXISTS ukazovatel_okres (
     poradie     INTEGER NOT NULL,
     podiel_nad_5km  REAL NOT NULL,
     podiel_nad_10km REAL NOT NULL,
+    na_10k_okolie   REAL NOT NULL,
+    poradie_okolie  INTEGER NOT NULL,
     PRIMARY KEY (snapshot_id, okres_kod, typ)
 );
 
@@ -112,6 +114,7 @@ CREATE TABLE IF NOT EXISTS ukazovatel_obec (
     pocet_v_obci  INTEGER NOT NULL,
     pocet_10km    INTEGER NOT NULL,
     pocet_20km    INTEGER NOT NULL,
+    na_10k_okolie REAL NOT NULL,
     PRIMARY KEY (snapshot_id, obec_kod, typ)
 );
 
@@ -162,6 +165,9 @@ def migrate(cfg, con):
             con.execute("ALTER TABLE obec ADD COLUMN ref_zdroj TEXT")
         con.execute("DROP TABLE IF EXISTS ukazovatel_okres")
         print("Databáza prevedená na verziu 4 (spusti areas, geocode a compute: nové referenčné body obcí a U7).")
+    if version < 5 and has_tables:
+        con.executescript("DROP TABLE IF EXISTS ukazovatel_okres; DROP TABLE IF EXISTS ukazovatel_obec;")
+        print("Databáza prevedená na verziu 5 (ukazovatele treba znovu vypočítať príkazom compute: nový U8).")
     con.executescript(SCHEMA)
     con.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     con.commit()

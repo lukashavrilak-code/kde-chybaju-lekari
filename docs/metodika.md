@@ -45,7 +45,7 @@ Počet ambulancií daného typu, ktorých poloha leží v okrese. Ambulancia je 
 - Počty obyvateľov sú zo STATdata Štatistického úradu SR (tabuľka om7006rr, pohlavie spolu, rok 2025). Je to **stredný (priemerný) stav obyvateľstva v roku 2025**, teda počet obyvateľov ku stredu roka. ŠÚ SR ho počíta ako priemer stavov na začiatku a na konci roka, preto majú niektoré obce polovičné hodnoty (napr. 171,5). Používame ich bez zaokrúhlenia. Dátum sa líši od dátumu registra.
 - Export STATdata neobsahuje kódy obcí. Obce spájame s hranicami ZBGIS podľa okresu a názvu obce. Spojí sa všetkých 2 927 obcí a súčet obcí sa rovná údaju za Slovensko.
 
-Obmedzenia: ľudia chodia k lekárovi aj mimo svojho okresu, najmä do miest. Mestské okresy preto môžu vychádzať lepšie, než zodpovedá ich vlastnému obyvateľstvu. V malých okresoch zmení jedna ambulancia hodnotu výrazne. Pre jednotlivé obce tento pomer nepočítame. Väčšina obcí vlastnú ambulanciu nemá a pri malom počte obyvateľov by pomer bol zavádzajúci.
+Obmedzenia: ľudia chodia k lekárovi aj mimo svojho okresu, najmä do miest. Mestské okresy preto môžu vychádzať lepšie, než zodpovedá ich vlastnému obyvateľstvu. Výrazné je to pri Bratislave a Košiciach, ktoré sú rozdelené na viac okresov: centrá (Bratislava I, Košice I) môžu vychádzať najlepšie a iné mestské okresy najhoršie. Preto uvádzame aj [U8](#u8), ktorý počíta s ambulanciami v okolí. V malých okresoch zmení jedna ambulancia hodnotu výrazne. Pre jednotlivé obce tento pomer nepočítame. Väčšina obcí vlastnú ambulanciu nemá a pri malom počte obyvateľov by pomer bol zavádzajúci.
 
 <a id="u3"></a>
 
@@ -67,7 +67,7 @@ Počet ambulancií daného typu, ktorých vzdušná vzdialenosť od referenčné
 
 ### U5 – Poradie okresov
 
-Okresy zoradené podľa U2 od najnižšej hodnoty. Prvé miesto znamená najmenej ambulancií na obyvateľa, teda najhoršiu dostupnosť. Rovnaké hodnoty majú rovnaké poradie.
+Okresy zoradené podľa U2 od najnižšej hodnoty. Prvé miesto znamená najmenej ambulancií na obyvateľa, teda najhoršiu dostupnosť. Rovnaké hodnoty majú rovnaké poradie. Rovnako počítame aj poradie podľa [U8](#u8).
 
 <a id="u6"></a>
 
@@ -88,6 +88,24 @@ Podiel obyvateľov okresu z príslušnej vekovej skupiny (18+ pri všeobecných 
 Prečo ho uvádzame: U2 hovorí, koľko ambulancií pripadá na obyvateľov okresu, ale nie, ako ďaleko to majú ľudia. Riedko osídlený okres môže mať veľa ambulancií na obyvateľa, a predsa veľa ľudí ďaleko od najbližšej z nich.
 
 Obmedzenia: rovnaké ako pri U3. Všetci obyvatelia obce dostanú vzdialenosť jej referenčného bodu a vzdialenosť je vzdušnou čiarou. Ukazovateľ nehovorí o kapacite ambulancií.
+
+<a id="u8"></a>
+
+### U8 – Ambulancie v okolí 10 km na 10 000 obyvateľov (okres)
+
+Ukazovateľ počíta s tým, že ľudia môžu chodiť aj k ambulanciám mimo svojej obce a okresu, a že o každú ambulanciu sa delia všetci, ktorí to k nej majú blízko. Je to metóda dvoch krokov s plávajúcou spádovou oblasťou (2SFCA, Luo a Wang, 2003):
+
+1. Pre každú ambulanciu sčítame obyvateľov príslušnej vekovej skupiny vo všetkých obciach, ktorých referenčný bod je od nej vzdušne do 10 km. Ambulancia pripadá na všetkých týchto ľudí rovnako.
+2. Pre každú obec sčítame, aká časť každej ambulancie do 10 km od jej referenčného bodu pripadá na jedného obyvateľa, a výsledok vynásobíme 10 000.
+3. Hodnota okresu je priemer jeho obcí vážený počtom obyvateľov.
+
+Príklad: obce A (1 000 dospelých) a B (3 000 dospelých) sú od seba 5,6 km a jediná ambulancia je v obci A. Do 10 km od nej býva 4 000 dospelých, preto obom obciam vyjde 1 ambulancia na 4 000 ľudí, teda 2,5 na 10 000. Keby sme počítali iba ambulancie v obci, A by mala 10 na 10 000 a B žiadnu.
+
+Všetky ambulancie sa pri tom rozdelia medzi obyvateľov presne raz: nič sa nestratí ani nepridá (kontrolujeme to). Jednotka je rovnaká ako pri U2, preto na mape používame rovnakú legendu.
+
+Obmedzenia: vzdialenosť je vzdušnou čiarou z referenčného bodu obce. Polomer 10 km je pevná hranica: ambulancia vo vzdialenosti 9 km sa započíta celá, vo vzdialenosti 11 km vôbec. Všetky ambulancie majú rovnakú váhu, lebo ich kapacitu nepoznáme. Neberieme do úvahy obyvateľov ani ambulancie za hranicami Slovenska.
+
+Zdroj metódy: Luo W., Wang F. (2003): Measures of spatial accessibility to health care in a GIS environment: synthesis and a case study in the Chicago region. Environment and Planning B 30(6), 865 – 884, doi:10.1068/b29120.
 
 ## Poloha ambulancií
 
@@ -153,7 +171,7 @@ Každý výstup nesie dátum zdrojových dát a verziu výpočtu. Celý postup j
 
 | Verzia | Dátum | Zmena |
 |---|---|---|
-| 0.1.0 | október 2026 | prvá verzia: ukazovatele U1 až U5, doplnkový U6 (pracoviská) a U7 (podiel obyvateľov ďalej ako 5 a 10 km); referenčný bod obce je bod sídla zo ZBGIS; obyvatelia zo STATdata (om7006rr, stredný stav 2025); kontrola s NCZI S01 2024; poloha musí ležať v obci z registra (tolerancia 300 m) |
+| 0.1.0 | október 2026 | prvá verzia: ukazovatele U1 až U5, doplnkový U6 (pracoviská), U7 (podiel obyvateľov ďalej ako 5 a 10 km) a U8 (ambulancie v okolí 10 km, 2SFCA); referenčný bod obce je bod sídla zo ZBGIS; obyvatelia zo STATdata (om7006rr, stredný stav 2025); kontrola s NCZI S01 2024; poloha musí ležať v obci z registra (tolerancia 300 m) |
 
 <a id="oprava"></a>
 

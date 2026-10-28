@@ -24,6 +24,7 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
     statdata = next(z for z in meta["zdroje"] if z["id"] == "statdata")
     assert statdata["atribucia"] == "Zdroj: Štatistický úrad SR, CC BY 4.0, www.statistics.sk"
     assert set(meta["vzdialenost_sr"]) == {"VLD", "VLDD"} and set(meta["vzdialenost_sr"]["VLD"]) == {"5", "10"}
+    assert meta["mestske_okresy"] == ["902"] and meta["spadova_oblast_km"] == 10
 
     snapshot = BASE / "snapshots" / "udzs" / "2026-10-01.xlsx"
     assert (BASE / "snapshots" / "udzs" / "2026-10-01.xlsx.sha256").read_text(encoding="utf-8").split()[0] == sha256_file(snapshot)
@@ -46,6 +47,7 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
             ("900006", "sidlo")]
         assert con.execute("SELECT vysledok, hodnota FROM validacia WHERE kod = 'V3.9'").fetchall() == [("WARN", "4 z 6")]
         assert con.execute("SELECT COUNT(*) FROM validacia WHERE kod = 'V5.6' AND vysledok = 'INFO'").fetchone()[0] == 2
+        assert con.execute("SELECT COUNT(*) FROM validacia WHERE kod = 'V5.7' AND vysledok = 'OK'").fetchone()[0] == 2
     finally:
         con.close()
     mismatches = read_csv_rows(BASE / "local" / "reports" / "geokod_mimo_obce_2026-10-01.csv")
@@ -56,8 +58,11 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
     okresy = json.loads((SITE / "data" / "okresy.geojson").read_text(encoding="utf-8"))["features"]
     assert sum(f["properties"]["vld_pracoviska"] for f in okresy) == 11
     assert all({"vld_nad5", "vld_nad10", "vldd_nad5", "vldd_nad10"} <= set(f["properties"]) for f in okresy)
+    assert all({"vld_okolie", "vld_poradie_okolie", "vldd_okolie", "vldd_poradie_okolie"} <= set(f["properties"]) for f in okresy)
     okres_csv = read_csv_rows(next((SITE / "downloads").glob("ukazovatele_okresy_*.csv")))
-    assert "pocet_pracovisk" in okres_csv[0] and "podiel_nad_10km" in okres_csv[0]
+    assert "pocet_pracovisk" in okres_csv[0] and "podiel_nad_10km" in okres_csv[0] and "na_10k_okolie" in okres_csv[0]
+    rebricky = (SITE / "rebricky.html").read_text(encoding="utf-8")
+    assert 'id="mestske-okresy"' in rebricky and 'href="#mestske-okresy"' in rebricky
     assert "stredný stav 2025" in (SITE / "metodika.html").read_text(encoding="utf-8")
 
     ambulancie = json.loads((SITE / "data" / "ambulancie.json").read_text(encoding="utf-8"))["ambulancie"]

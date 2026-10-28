@@ -26,8 +26,8 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 
 | Stránka | Čo ukazuje | Šablóna | JavaScript | Dáta |
 |---|---|---|---|---|
-| Mapa | okresy zafarbené podľa U2 alebo obce podľa vzdialenosti (U3), legenda, panel okresu a obce, vyhľadanie obce | `index.html` | všetky moduly | `meta.json`, `okresy.geojson`, neskôr `obce.json` a `ambulancie.json` |
-| Rebríčky | 10 najhorších a 10 najlepších okresov, celé poradie s pracoviskami | `rebricky.html` | žiadny | vypočítané v Pythone pri exporte |
+| Mapa | okresy zafarbené podľa U2 alebo U8, obce podľa vzdialenosti (U3), legenda, panel okresu a obce, vyhľadanie obce | `index.html` | všetky moduly | `meta.json`, `okresy.geojson`, neskôr `obce.json` a `ambulancie.json` |
+| Rebríčky | 10 najhorších okresov podľa U2 a podľa U8, 10 najlepších podľa U2, celé poradie s pracoviskami a U8, poznámka k mestským okresom | `rebricky.html` | žiadny | vypočítané v Pythone pri exporte |
 | Dáta | CSV na stiahnutie a popis stĺpcov | `data.html` | žiadny | `downloads/*.csv` |
 | Metodika | text z `docs/metodika.md` a tabuľka „Aktuálny stav dát“ | `metodika.html` | žiadny | – |
 | Súkromie | text z `docs/sukromie.md`, prevádzkovateľ a kontakt | `sukromie.html` | žiadny | – |
@@ -47,7 +47,7 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 
 Pri otvorení mapy sa načítajú iba `meta.json` a `okresy.geojson`. Zoznam obcí (`obce.json`) sa načíta až pri kliknutí do vyhľadávania. Zoznam ambulancií (`ambulancie.json`) sa načíta až po výbere obce. Prvé načítanie je tak menšie.
 
-**Stav v adrese.** Výber sa zapisuje za znak `#`, napr. `index.html#typ=VLDD&obec=<kód obce>`, `#okres=<kód okresu>` alebo `#vrstva=obce` (mapa obcí podľa vzdialenosti). Takýto odkaz sa dá poslať a tlačidlo Späť v prehliadači funguje (udalosť `hashchange` v `app.js`).
+**Stav v adrese.** Výber sa zapisuje za znak `#`, napr. `index.html#typ=VLDD&obec=<kód obce>`, `#okres=<kód okresu>`, `#vrstva=okolie` (okresy podľa U8) alebo `#vrstva=obce` (mapa obcí podľa vzdialenosti). Takýto odkaz sa dá poslať a tlačidlo Späť v prehliadači funguje (udalosť `hashchange` v `app.js`).
 
 **Prečo nikde nie je `innerHTML`.** Názvy a adresy z registra sa do stránky vkladajú iba ako text, cez funkciu `el()` (vlastnosť `textContent`). Aj keby register obsahoval kód HTML, zobrazí sa ako obyčajný text. Umelé dáta preto zámerne obsahujú názov `<img src=x onerror=alert(1)>`. `scripts/check_repo.py` zakázané vzory v JS kontroluje.
 
@@ -62,7 +62,8 @@ Pri otvorení mapy sa načítajú iba `meta.json` a `okresy.geojson`. Zoznam obc
 Na počítači:
 - [ ] Mapa: farby okresov a legenda. Sedí počet okresov v zátvorkách v legende?
 - [ ] Prepínač „Lekári pre dospelých / Pediatri“: zmenia sa farby aj legenda?
-- [ ] Klik na okres: panel s ukazovateľmi U1, U6, U2, U5 a U7. Ikona ⓘ vedie do metodiky.
+- [ ] Klik na okres: panel s ukazovateľmi U1, U6, U2, U5, U8 a U7. Ikona ⓘ vedie do metodiky. Pri mestských okresoch Bratislavy a Košíc je navyše poznámka.
+- [ ] Prepínač „Mapa: Okresy – okolie 10 km“: farby podľa U8. Porovnaj Košice III a Bratislavu I s režimom „Okresy“.
 - [ ] Prepínač „Mapa: Obce podľa vzdialenosti“: každá obec je bod, tmavší bod = ďalej od ambulancie. Klik na bod vyberie obec.
 - [ ] Vyhľadanie obce (skús aj bez diakritiky): okruhy 10 a 20 km, body ambulancií, panel obce.
 - [ ] Karty ambulancií: „Zobraziť ďalšie“, „Kontakt a ordinačné hodiny“, „Nahlásiť chybu v zázname“.
@@ -116,7 +117,7 @@ Príkaz `python -m pipeline all` spustí kroky v tomto poradí. Každý krok sa 
 | 4 | `clean` | `clean.py` | snapshot, `data/local/blocklist.csv`, `data/manual/obec_mapping.csv` | tabuľky `ambulancia` a `adresa_obec` | V3.0 výber, V3.1 blocklist, V3.2 adresa, V3.3 možné duplicity, V3.8 obec z adresy |
 | 5 | `nczi` | `nczi.py` | súbor NCZI (stiahne sa raz) | tabuľka `nczi_porovnanie`, report `nczi_rozdiel_*.md` | V3.7 pomer register / NCZI (iba upozornenie) |
 | 6 | `geocode` | `geocode.py` | adresy ambulancií, cache, `data/manual/geocode_overrides.csv` | tabuľka `geokod`, `data/cache/geocode_cache.csv`, reporty `geokod_*.csv` | V4.1 až V4.6 poloha, obec, presnosť, zhluky |
-| 7 | `compute` | `compute.py` | ambulancie s polohou, obce, okresy | tabuľky `ukazovatel_okres` a `ukazovatel_obec`, `data/history/pocty_okresy.csv` | V5.1 súčty, V5.2 menovateľ a odľahlé hodnoty, V5.4 zmeny v čase, V5.5 konzistentnosť, V5.6 obce s ambulanciou, no s referenčným bodom ďaleko od nej |
+| 7 | `compute` | `compute.py` | ambulancie s polohou, obce, okresy | tabuľky `ukazovatel_okres` a `ukazovatel_obec`, `data/history/pocty_okresy.csv` | V5.1 súčty, V5.2 menovateľ a odľahlé hodnoty, V5.4 zmeny v čase, V5.5 konzistentnosť, V5.6 obce s ambulanciou, no s referenčným bodom ďaleko od nej, V5.7 U8 rozdelí všetky ambulancie presne raz |
 | 8 | `export` | `export.py`, `site.py` | všetky tabuľky | `site/` (HTML, `data/*.json`, `downloads/*.csv`), report validácie | V6.1 až V6.6 povolené kľúče, veľkosti súborov, súradnice, upozornenie, typy súborov, CSV bez vzorcov |
 
 `areas` beží hneď po `download`, lebo `clean` potrebuje tabuľku obcí na priradenie obce k adrese. Diagram v README ukazuje tie isté kroky zjednodušene.
@@ -141,8 +142,8 @@ Všetky medzivýsledky sú v SQLite súbore `data/local/lekari.sqlite`. Schéma 
 | `obec` | 2 927 obcí: názov, okres, kraj, referenčný bod a jeho zdroj (`ref_zdroj`: `sidlo` alebo `stred`), obyvatelia | `obec_kod` |
 | `okres` | 79 okresov: názov, kraj, súčty obyvateľov | `okres_kod` |
 | `nczi_porovnanie` | naše počty a počty NCZI po krajoch | `snapshot_id`, `typ`, `kraj_kod` |
-| `ukazovatel_okres` | U1, U2, U5, U6, U7 pre každý okres a typ | `snapshot_id`, `okres_kod`, `typ` |
-| `ukazovatel_obec` | U3, U4 pre každú obec a typ | `snapshot_id`, `obec_kod`, `typ` |
+| `ukazovatel_okres` | U1, U2, U5, U6, U7, U8 pre každý okres a typ | `snapshot_id`, `okres_kod`, `typ` |
+| `ukazovatel_obec` | U3, U4, U8 pre každú obec a typ | `snapshot_id`, `obec_kod`, `typ` |
 | `zdroj` | odtlačky vstupných súborov ZBGIS a STATdata | `zdroj_id` |
 | `validacia` | výsledky všetkých kontrol | – |
 | `v_ambulancia` (pohľad) | ambulancia + poloha z `geokod` + obec, okres a kraj | – |
@@ -197,6 +198,33 @@ Príklad: okres má tri obce so 100, 300 a 600 dospelými. Ich najbližšia ambu
 
 U7 meria niečo iné ako U2. Pri pediatroch sú Medzilaborce podľa U2 druhé najlepšie (78. zo 79), a predsa 10,1 % detí tam má najbližšieho pediatra ďalej ako 10 km. Krupina je podľa U2 najhoršia a zároveň má ďalej ako 10 km 21,2 % detí (register k 1. 10. 2026).
 
+### U8: ambulancie v okolí 10 km (2SFCA)
+
+U2 počíta iba ambulancie a obyvateľov vo vnútri hraníc okresu. Ľudia však chodia aj do susedného okresu. Pri meste rozdelenom na okresy je to veľký rozdiel: Košice I majú veľa ambulancií a málo obyvateľov, Košice III naopak.
+
+Metóda 2SFCA (`catchment_access` a `catchment_by_okres` v `compute.py`) má dva kroky:
+1. **Za každú ambulanciu:** koľko ľudí býva do 10 km od nej? Ambulancia sa rozdelí rovnakým dielom medzi všetkých týchto ľudí.
+2. **Za každú obec:** sčítaj diely všetkých ambulancií do 10 km a vynásob 10 000.
+
+Hodnota okresu je vážený priemer obcí.
+
+Príklad z `tests/test_compute.py`: obce A (1 000 dospelých), B (3 000 dospelých, 5,6 km od A) a C (1 000 dospelých, ďaleko). Ambulancie sú v A, v C a jedna ďalej ako 10 km od všetkých obcí.
+- Ambulancia v A sa delí medzi 4 000 ľudí z A a B, takže A aj B dostanú 1 / 4 000, teda **2,5 na 10 000**.
+- Ambulancia v C patrí iba 1 000 ľuďom z C, takže C dostane **10 na 10 000**.
+- Ambulancia bez obyvateľov do 10 km sa nezapočíta nikomu.
+
+**Zákon zachovania (kontrola V5.7).** Ak vynásobíš hodnotu každej obce jej počtom obyvateľov a sčítaš (a vydelíš 10 000), dostaneš presne počet ambulancií, ktoré majú niekoho do 10 km. V príklade: (2,5 · 1 000 + 2,5 · 3 000 + 10 · 1 000) / 10 000 = 2. Pri reálnych dátach je to 2 433 z 2 433 ambulancií VLD. Žiadna ambulancia sa tak nestratí ani nezapočíta dvakrát.
+
+Výsledok pri VLD (register k 1. 10. 2026):
+
+| Okres | U2 | U8 |
+|---|---|---|
+| Košice III | 2,66, 1. miesto | 7,10, 70. miesto |
+| Bratislava I | 17,55, 79. miesto | 7,58, 75. miesto |
+| Košice – okolie | 3,14, 2. miesto | 3,95, 5. miesto |
+
+Rozpätie okresov sa zúžilo z 2,66 – 17,55 na 3,25 – 8,35. Najhoršie podľa U8 sú Bytča, Sabinov, Námestovo, Kysucké Nové Mesto a Košice – okolie.
+
 ### U6: pracoviská
 
 Pracovisko je jedna dvojica IČO + adresa. Ak má poskytovateľ na jednej adrese viac kódov, počíta sa ako jedno pracovisko. Preto U6 nikdy nie je vyšší ako U1 (kontrola V5.1). K 1. 10. 2026: VLD 2 433 kódov a 2 301 pracovísk.
@@ -224,7 +252,7 @@ Hranice farieb sú pevne dané v `config.toml`, sekcia `[legenda]`: VLD 4, 5, 6 
 
 - **Malé čísla.** V okrese s pár ambulanciami zmení jedna ambulancia U2 výrazne. Panel okresu na to pri menej ako 10 ambulanciách upozorní.
 - **Dochádzanie.** Ľudia chodia k lekárovi aj mimo svojho okresu, najmä do miest.
-- **Mestá rozdelené na okresy.** Bratislava I–V a Košice I–IV: centrá vychádzajú najlepšie a iné mestské okresy najhoršie. Pri VLD je posledný Košice III (2,66) a predposledné Košice – okolie (3,14), k 1. 10. 2026.
+- **Mestá rozdelené na okresy.** Bratislava I–V a Košice I–IV: podľa U2 vychádzajú centrá najlepšie a iné mestské okresy najhoršie. Pri VLD sú Košice III posledné (2,66), k 1. 10. 2026. Riešením je U8 (vyššie).
 - **Rôzne dátumy.** Register je k 1. 10. 2026, obyvatelia sú stredný stav 2025 a NCZI je k 31. 12. 2024.
 - **Kód nie je lekár.** Jeden kód je jedna ambulancia v registri, nie jeden lekár ani úväzok.
 
@@ -401,6 +429,20 @@ JOIN okres o ON o.okres_kod = u.okres_kod
 WHERE u.typ = 'VLDD'
 ORDER BY u.podiel_nad_10km DESC
 LIMIT 10;
+```
+
+**13. Okresy, ktoré sa medzi U2 a U8 posunuli najviac.** Kladný posun znamená, že okres je podľa U8 na tom lepšie, ako ukazuje U2.
+
+```sql
+WITH posledny AS (SELECT snapshot_id FROM snapshot ORDER BY stav_k DESC LIMIT 1)
+SELECT o.nazov AS okres, u.na_10k AS u2, u.poradie AS poradie_u2, u.na_10k_okolie AS u8,
+       u.poradie_okolie AS poradie_u8, u.poradie_okolie - u.poradie AS posun
+FROM ukazovatel_okres u
+JOIN posledny USING (snapshot_id)
+JOIN okres o ON o.okres_kod = u.okres_kod
+WHERE u.typ = 'VLD'
+ORDER BY ABS(u.poradie_okolie - u.poradie) DESC
+LIMIT 15;
 ```
 
 ## 7. Slovníček

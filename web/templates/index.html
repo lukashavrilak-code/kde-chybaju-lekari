@@ -19,6 +19,7 @@
   <fieldset class="prepinac">
     <legend>Mapa</legend>
     <label><input type="radio" name="vrstva" value="okresy" checked> Okresy</label>
+    <label><input type="radio" name="vrstva" value="okolie"> Okresy – okolie {{ spadova_oblast_km }} km</label>
     <label><input type="radio" name="vrstva" value="obce"> Obce podľa vzdialenosti</label>
   </fieldset>
   <div class="hladanie">
@@ -36,7 +37,7 @@
   <aside id="panel" class="panel" aria-live="polite">
     <h2>Ako čítať mapu</h2>
     <p>Farba okresu ukazuje počet ambulancií všeobecných lekárov na 10&nbsp;000 obyvateľov príslušnej vekovej skupiny. Tmavšia farba znamená menej ambulancií.</p>
-    <p>V režime „Obce podľa vzdialenosti“ je každá obec bod. Tmavší bod znamená, že najbližšia ambulancia je ďalej.</p>
+    <p>V režime „Okresy – okolie {{ spadova_oblast_km }}&nbsp;km“ farba započíta aj ambulancie v susedných okresoch do {{ spadova_oblast_km }}&nbsp;km. Je výstižnejšia najmä pre Bratislavu a Košice. V režime „Obce podľa vzdialenosti“ je každá obec bod. Tmavší bod znamená, že najbližšia ambulancia je ďalej.</p>
     <p>Kliknite na okres alebo vyhľadajte obec. Pre obec ukážeme vzdialenosť k najbližšej ambulancii a zoznam ambulancií v okolí.</p>
   </aside>
 </div>

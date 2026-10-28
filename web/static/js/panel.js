@@ -29,6 +29,11 @@ export function vykresliOkres(panel, okres, typ, meta, pocetOkresov) {
     ...riadok("Pracoviská (rovnaké IČO a adresa)", formatCislo(p[`${prefix}_pracoviska`]), "u6"),
     ...riadok(`Na 10 000 ${meta.menovatele[typ]}`, formatNa10k(p[`${prefix}_na10k`]), "u2"),
     ...riadok("Poradie (1 = najmenej)", `${p[`${prefix}_poradie`]}. z ${pocetOkresov}`, "u5"),
+    ...riadok(
+      `V okolí ${meta.spadova_oblast_km} km: na 10 000 ${meta.menovatele[typ]}`,
+      `${formatNa10k(p[`${prefix}_okolie`])} (${p[`${prefix}_poradie_okolie`]}. z ${pocetOkresov})`,
+      "u8",
+    ),
     ...meta.podiel_nad_km.flatMap((km) =>
       riadok(`Podiel ${meta.menovatele[typ]} ďalej ako ${km} km`, formatPercento(p[`${prefix}_nad${km}`]), "u7"),
     ),
@@ -38,6 +43,16 @@ export function vykresliOkres(panel, okres, typ, meta, pocetOkresov) {
     el("p", { trieda: "poznamka", text: `${p.kraj} · ${meta.nazvy_typov[typ]}` }),
     suhrn,
   ];
+  if (meta.mestske_okresy.includes(p.kod)) {
+    casti.push(el(
+      "p",
+      {
+        trieda: "poznamka",
+        text: `Mestský okres: ľudia môžu chodiť k lekárovi aj do iného okresu mesta, výstižnejší je preto ukazovateľ v okolí ${meta.spadova_oblast_km} km. `,
+      },
+      el("a", { text: "Viac o mestských okresoch", atributy: { href: "rebricky.html#mestske-okresy" } }),
+    ));
+  }
   if (pocet < 10) {
     casti.push(el("p", { trieda: "poznamka", text: "Malé čísla: jedna ambulancia navyše alebo menej mení hodnotu výrazne." }));
   }

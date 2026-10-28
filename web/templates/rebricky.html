@@ -1,31 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Rebríčky okresov – {% endblock %}
-{% macro tabulka(riadky, typ, popis, pracoviska=false) %}
+{% macro tabulka(riadky, typ, popis, pracoviska=false, okolie=false, u8=false) %}
+<div class="tabulka-obal">
 <table class="tabulka">
   <caption>{{ popis }}</caption>
   <thead>
-    <tr><th scope="col">Poradie</th><th scope="col">Okres</th><th scope="col">Kraj</th><th scope="col" class="cislo">Ambulancie</th>{% if pracoviska %}<th scope="col" class="cislo"><a href="metodika.html#u6">Pracoviská</a></th>{% endif %}<th scope="col" class="cislo">Na 10&nbsp;000 {{ menovatele[typ] }}</th></tr>
+    <tr><th scope="col">Poradie</th><th scope="col">Okres</th><th scope="col">Kraj</th><th scope="col" class="cislo">Ambulancie</th>{% if pracoviska %}<th scope="col" class="cislo"><a href="metodika.html#u6">Pracoviská</a></th>{% endif %}<th scope="col" class="cislo">{% if u8 %}<a href="metodika.html#u8">V okolí {{ spadova_oblast_km }} km</a> na 10&nbsp;000 {{ menovatele[typ] }}{% else %}Na 10&nbsp;000 {{ menovatele[typ] }}{% endif %}</th>{% if okolie %}<th scope="col" class="cislo"><a href="metodika.html#u8">V okolí {{ spadova_oblast_km }} km</a></th>{% endif %}</tr>
   </thead>
   <tbody>
 {% for r in riadky %}
-    <tr><td>{{ r.poradie }}.</td><td>{{ r.nazov }}</td><td>{{ r.kraj }}</td><td class="cislo">{{ r.pocet|cislo }}</td>{% if pracoviska %}<td class="cislo">{{ r.pracoviska|cislo }}</td>{% endif %}<td class="cislo">{{ r.na_10k|cislo(2) }}</td></tr>
+    <tr><td>{{ r.poradie }}.</td><td>{{ r.nazov }}{% if r.mestsky %} <a class="znacka" href="#mestske-okresy" aria-label="mestský okres, pozri vysvetlenie">*</a>{% endif %}</td><td>{{ r.kraj }}</td><td class="cislo">{{ r.pocet|cislo }}</td>{% if pracoviska %}<td class="cislo">{{ r.pracoviska|cislo }}</td>{% endif %}<td class="cislo">{{ r.na_10k|cislo(2) }}</td>{% if okolie %}<td class="cislo">{{ r.okolie|cislo(2) }}</td>{% endif %}</tr>
 {% endfor %}
   </tbody>
 </table>
+</div>
 {% endmacro %}
 {% block main %}
 <h1>Rebríčky okresov</h1>
 <p>Okresy sú zoradené podľa počtu ambulancií na 10&nbsp;000 obyvateľov príslušnej vekovej skupiny. Prvé miesto znamená najmenej ambulancií, teda najhoršiu dostupnosť. <a href="metodika.html#u2">Definícia ukazovateľa</a></p>
+<p>Tabuľka „v okolí {{ spadova_oblast_km }} km“ radí okresy podľa ukazovateľa U8. Ten započíta všetky ambulancie do {{ spadova_oblast_km }} km od obcí okresu, aj v susedných okresoch, a zároveň to, že sa o ne delia všetci obyvatelia v ich okolí. <a href="metodika.html#u8">Definícia ukazovateľa U8</a></p>
+<p id="mestske-okresy" class="poznamka"><strong>* Mestské okresy.</strong> Bratislava a Košice sú rozdelené na viac okresov (Bratislava I – V, Košice I – IV). Ambulancie sú v nich rozložené nerovnomerne a ľudia môžu chodiť k lekárovi aj do iného mestského okresu. Podľa počtu na obyvateľa okresu preto centrá môžu vychádzať najlepšie a ostatné mestské okresy najhoršie. Pri mestských okresoch je výstižnejší ukazovateľ v okolí {{ spadova_oblast_km }} km. Pri konkrétnej mestskej časti je to vzdialenosť k najbližšej ambulancii na <a href="index.html">mape</a>.</p>
 {% for typ in typy %}
 <section class="rebricek">
   <h2>{{ nazvy_typov[typ] }}</h2>
   <div class="dve-tabulky">
-    {{ tabulka(rebricky[typ].najhorsie, typ, "Najmenej ambulancií") }}
-    {{ tabulka(rebricky[typ].najlepsie, typ, "Najviac ambulancií") }}
+    {{ tabulka(rebricky[typ].najhorsie, typ, "Najmenej ambulancií v okrese") }}
+    {{ tabulka(rebricky[typ].najhorsie_okolie, typ, "Najmenej ambulancií v okolí " ~ spadova_oblast_km ~ " km", u8=true) }}
+    {{ tabulka(rebricky[typ].najlepsie, typ, "Najviac ambulancií v okrese") }}
   </div>
   <details>
     <summary>Celé poradie ({{ rebricky[typ].vsetky|length }} okresov)</summary>
-    {{ tabulka(rebricky[typ].vsetky, typ, "Všetky okresy", pracoviska=true) }}
+    {{ tabulka(rebricky[typ].vsetky, typ, "Všetky okresy", pracoviska=true, okolie=true) }}
   </details>
 </section>
 {% endfor %}
@@ -34,7 +39,7 @@
   <ul>
     <li>Počítame ambulancie v registri, nie lekárov ani ich úväzky. Register neuvádza, či ambulancia prijíma nových pacientov.</li>
     <li>V malých okresoch zmení jedna ambulancia hodnotu výrazne.</li>
-    <li>Ľudia chodia k lekárovi aj do susedného okresu, najmä do miest. Mestské okresy (napr. Bratislava, Košice) preto môžu vychádzať lepšie, než zodpovedá ich vlastnému obyvateľstvu.</li>
+    <li>Ľudia chodia k lekárovi aj do susedného okresu, najmä do miest. Počet na obyvateľa okresu to nezachytí, preto uvádzame aj ukazovateľ v okolí {{ spadova_oblast_km }} km.</li>
   </ul>
   <p><a href="metodika.html">Všetky obmedzenia v metodike</a></p>
 </section>

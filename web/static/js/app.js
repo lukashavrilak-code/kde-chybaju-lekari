@@ -79,12 +79,17 @@ async function obnovVrstvy() {
     return;
   }
   vrstvaObci.skry();
+  const okolie = stav.vrstva === "okolie" ? ` v okolí ${meta.spadova_oblast_km} km` : "";
   vykresliLegendu(
     legenda,
-    `Ambulancie na 10 000 ${meta.menovatele[stav.typ]}: ${nazovTypu}`,
+    `Ambulancie na 10 000 ${meta.menovatele[stav.typ]}${okolie}: ${nazovTypu}`,
     meta.legenda[stav.typ],
-    okresy.features.map((feature) => feature.properties[`${prefix}_na10k`]),
+    okresy.features.map((feature) => feature.properties[`${prefix}_${ukazovatelOkresov()}`]),
   );
+}
+
+function ukazovatelOkresov() {
+  return stav.vrstva === "okolie" ? "okolie" : "na10k";
 }
 
 async function zobrazObec(obec) {
@@ -113,7 +118,7 @@ async function zobrazObec(obec) {
 async function aplikujStav() {
   const hash = citajHash();
   stav.typ = platnyTyp(hash.typ);
-  stav.vrstva = hash.vrstva === "obce" ? "obce" : "okresy";
+  stav.vrstva = ["okolie", "obce"].includes(hash.vrstva) ? hash.vrstva : "okresy";
   synchronizujPrepinac();
   await obnovVrstvy();
   if (hash.obec) {
@@ -145,6 +150,8 @@ async function start() {
   const mapa = vytvorMapu("mapa", meta);
   vrstvaOkresov = new VrstvaOkresov(mapa, okresy, {
     typ: () => stav.typ,
+    ukazovatel: ukazovatelOkresov,
+    popis: () => (stav.vrstva === "okolie" ? `na 10 000 v okolí ${meta.spadova_oblast_km} km` : "na 10 000"),
     hranice: () => meta.legenda[stav.typ],
     priKliknuti: (feature) => zapisHash({ okres: feature.properties.kod, obec: null }),
   });
@@ -154,7 +161,7 @@ async function start() {
     radio.addEventListener("change", () => zapisHash({ typ: radio.value }));
   });
   document.querySelectorAll('input[name="vrstva"]').forEach((radio) => {
-    radio.addEventListener("change", () => zapisHash({ vrstva: radio.value === "obce" ? "obce" : null }));
+    radio.addEventListener("change", () => zapisHash({ vrstva: radio.value === "okresy" ? null : radio.value }));
   });
   nastavHladanie(vstup, document.getElementById("navrhy"), indexObci, (obec) => zapisHash({ obec: obec.kod, okres: null }));
   window.addEventListener("hashchange", () => aplikujStav().catch(zobrazChybu));

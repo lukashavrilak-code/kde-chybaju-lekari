@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from pipeline.compute import distance_shares, obec_indicators, okres_indicators
+from pipeline.compute import catchment_access, catchment_by_okres, distance_shares, obec_indicators, okres_indicators
 
 
 def test_okres_rate_and_rank_on_hand_computed_example():
@@ -46,6 +46,24 @@ def test_obec_distances_and_counts():
     assert round(result.loc["2", "najblizsia_km"], 1) == 11.1
     assert result.loc["2", "pocet_10km"] == 0
     assert result.loc["2", "pocet_20km"] == 1
+
+
+def test_catchment_access_shares_ambulances_with_everyone_nearby():
+    obce = pd.DataFrame({
+        "obec_kod": ["A", "B", "C"],
+        "okres_kod": ["X", "X", "Y"],
+        "ref_lat": [48.00, 48.05, 48.30],
+        "ref_lon": [19.0, 19.0, 19.0],
+        "obyv_dospeli": [1000, 3000, 1000],
+    })
+    amb = pd.DataFrame({"typ": ["VLD"] * 3, "lat": [48.00, 48.15, 48.30], "lon": [19.0] * 3})
+    rates, served = catchment_access(amb, obce, "VLD", 10)
+    assert np.allclose(rates, [2.5, 2.5, 10.0])
+    assert served == 2
+    rows = pd.DataFrame({"obec_kod": obce["obec_kod"], "typ": "VLD", "na_10k_okolie": rates})
+    result = catchment_by_okres(rows, obce, "VLD").set_index("okres_kod")
+    assert result["na_10k_okolie"].to_dict() == {"X": 2.5, "Y": 10.0}
+    assert result["poradie_okolie"].to_dict() == {"X": 1, "Y": 2}
 
 
 def test_distance_shares_weighted_by_population():

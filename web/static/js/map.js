@@ -43,7 +43,7 @@ export class VrstvaOkresov {
   }
 
   hodnota(feature) {
-    return feature.properties[`${this.nastavenia.typ().toLowerCase()}_na10k`];
+    return feature.properties[`${this.nastavenia.typ().toLowerCase()}_${this.nastavenia.ukazovatel()}`];
   }
 
   styl(feature) {
@@ -65,7 +65,7 @@ export class VrstvaOkresov {
       "div",
       null,
       el("div", { trieda: "tooltip-nazov", text: `Okres ${feature.properties.nazov}` }),
-      el("div", { text: `${formatNa10k(this.hodnota(feature))} na 10 000` }),
+      el("div", { text: `${formatNa10k(this.hodnota(feature))} ${this.nastavenia.popis()}` }),
     );
   }
 

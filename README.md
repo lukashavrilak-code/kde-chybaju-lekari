@@ -8,7 +8,7 @@ Interaktívna mapa dostupnosti **všeobecných lekárov pre dospelých** a **ped
 
 ## Čo stránka ukazuje
 
-- mapu okresov zafarbenú podľa počtu ambulancií na 10 000 obyvateľov príslušnej vekovej skupiny,
+- mapu okresov zafarbenú podľa počtu ambulancií na 10 000 obyvateľov príslušnej vekovej skupiny, aj vrátane ambulancií v okolí 10 km (dôležité pre Bratislavu a Košice),
 - pre každú obec vzdialenosť k najbližšej ambulancii a počet ambulancií do 10 a 20 km, aj ako mapu obcí,
 - podiel obyvateľov okresu, ktorí majú najbližšiu ambulanciu ďalej ako 5 a 10 km,
 - zoznam ambulancií v okolí s odkazom na oficiálne vyhľadávanie lekárov zdravotných poisťovní,
