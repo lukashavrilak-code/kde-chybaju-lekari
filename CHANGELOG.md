@@ -18,3 +18,4 @@ Verzia pipeline: MAJOR.MINOR.PATCH. Zmena definície ukazovateľa zvyšuje MINOR
 - Geokódovanie: bod musí ležať v obci z registra (tolerancia 300 m), inak sa skúša dotaz obmedzený na obec, obec + PSČ a stred obce; upravené znenia adries (bez „ul.“ a „č.“, prehodené číslo, obce bez ulíc); limit `--max-dotazov`; report s riešením nezhody.
 - Ulica „null“ z registra sa berie ako prázdna. Myslenice → Pezinok.
 - Cache geokódovania mimo Gitu. Príkaz `zaloha` (cache, snapshoty, ručné zdroje do OneDrive/na disk) spúšťaný mesačne z Plánovača úloh. Upozornenie NCZI iba pri pomere mimo 0,8 – 1,6. Text „stredný stav 2025“ pri obyvateľoch.
+- `serve --host 0.0.0.0`: náhľad webu z telefónu v domácej sieti. Sprievodca projektom (`docs/sprievodca.md`). Úloha Plánovača úloh sa spustí aj na batérii a dobehne zmeškaný termín.

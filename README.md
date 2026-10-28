@@ -52,10 +52,11 @@ pre-commit install
 
 python -m pipeline all --fixtures          # celý beh na umelých dátach
 python -m pipeline serve --fixtures        # náhľad na http://127.0.0.1:8000
+python -m pipeline serve --host 0.0.0.0    # náhľad aj z telefónu v domácej Wi-Fi
 python -m pytest -q                        # testy
 ```
 
-Ostrý beh s reálnymi dátami popisuje [docs/runbook.md](docs/runbook.md).
+Ostrý beh s reálnymi dátami popisuje [docs/runbook.md](docs/runbook.md). Ako fungujú web, pipeline a ukazovatele, vysvetľuje [docs/sprievodca.md](docs/sprievodca.md).
 
 ## Štruktúra repozitára
 
@@ -63,7 +64,7 @@ Ostrý beh s reálnymi dátami popisuje [docs/runbook.md](docs/runbook.md).
 |---|---|
 | `pipeline/` | kroky spracovania, jeden modul na krok |
 | `web/` | šablóny stránok, CSS, JS a lokálna kópia Leaflet |
-| `docs/` | metodika, ochrana súkromia, test oprávneného záujmu, zdroje a licencie, overenia, runbook |
+| `docs/` | metodika, ochrana súkromia, test oprávneného záujmu, zdroje a licencie, overenia, runbook, sprievodca projektom |
 | `data/manual`, `data/history` | ručné opravy a agregovaná história (bez osobných údajov) |
 | `data/raw`, `data/snapshots`, `data/cache`, `data/local` | surové dáta, archív snapshotov registra, cache geokódovania, databáza a reporty – iba lokálne, mimo Gitu (záloha podľa runbooku) |
 | `tests/` | testy pytest |

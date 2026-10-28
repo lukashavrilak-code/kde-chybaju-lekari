@@ -22,6 +22,15 @@ Príkaz `python -m pipeline skontroluj` iba pozrie stránku ÚDZS (1 požiadavka
 
 ```powershell
 schtasks /Create /SC MONTHLY /D 3 /ST 09:00 /TN "Lekari - kontrola registra" /TR "powershell -NoProfile -ExecutionPolicy Bypass -File D:\Lekari_data\scripts\skontroluj_register.ps1"
+$nastavenia = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+Set-ScheduledTask -TaskName "Lekari - kontrola registra" -Settings $nastavenia
+```
+
+Druhý a tretí príkaz zmenia predvolené nastavenie: úloha sa spustí aj na batérii a zmeškaný termín (počítač bol 3. o 9:00 vypnutý) dobehne pri najbližšej príležitosti. Kontrola nastavenia a ďalšieho spustenia:
+
+```powershell
+(Get-ScheduledTask -TaskName "Lekari - kontrola registra").Settings | Select-Object StartWhenAvailable, DisallowStartIfOnBatteries, StopIfGoingOnBatteries
+Get-ScheduledTaskInfo -TaskName "Lekari - kontrola registra" | Select-Object NextRunTime, LastRunTime, LastTaskResult
 ```
 
 Zrušenie: `schtasks /Delete /TN "Lekari - kontrola registra"`.

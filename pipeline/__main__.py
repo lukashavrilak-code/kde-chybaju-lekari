@@ -1,6 +1,7 @@
 import argparse
 import functools
 import http.server
+import socket
 import sys
 from typing import ClassVar
 
@@ -33,11 +34,26 @@ class StaticHandler(http.server.SimpleHTTPRequestHandler):
     }
 
 
-def serve(cfg, port):
+def lan_addresses():
+    try:
+        return [a for a in socket.gethostbyname_ex(socket.gethostname())[2] if not a.startswith("127.")]
+    except OSError:
+        return []
+
+
+def serve(cfg, host, port):
     site = project_path(cfg, "site")
     handler = functools.partial(StaticHandler, directory=str(site))
-    with http.server.ThreadingHTTPServer(("127.0.0.1", port), handler) as server:
-        print(f"Náhľad: http://127.0.0.1:{port}/  (ukončenie: Ctrl+C)")
+    with http.server.ThreadingHTTPServer((host, port), handler) as server:
+        if host == "0.0.0.0":
+            addresses = lan_addresses()
+            if addresses:
+                print("Náhľad z telefónu v tej istej Wi-Fi: " + ", ".join(f"http://{a}:{port}/" for a in addresses))
+            else:
+                print("Adresu počítača zistíš príkazom ipconfig (riadok IPv4 Address).")
+            print("Iba v domácej sieti. Ukončenie: Ctrl+C")
+        else:
+            print(f"Náhľad: http://{host}:{port}/  (ukončenie: Ctrl+C)")
         try:
             server.serve_forever()
         except KeyboardInterrupt:
@@ -67,7 +83,7 @@ def run(args):
     if args.fixtures:
         fixtures.apply(cfg)
     if args.prikaz == "serve":
-        return serve(cfg, args.port)
+        return serve(cfg, args.host, args.port)
     if args.prikaz == "deploy":
         return deploy(cfg)
     if args.prikaz == "zaloha":
@@ -122,6 +138,7 @@ def main(argv=None):
     parser.add_argument("--max-dotazov", type=int, help="najviac N nových dotazov na Nominatim v tomto behu")
     parser.add_argument("--force", action="store_true", help="nahradiť snapshot s rovnakým dátumom; pri nczi znovu stiahnuť súbor")
     parser.add_argument("--potvrdit-zmeny", action="store_true", help="pokračovať aj pri veľkej zmene počtov")
+    parser.add_argument("--host", default="127.0.0.1", help="adresa náhľadu pre serve (0.0.0.0 = aj z telefónu v domácej sieti)")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args(argv)
     try:
