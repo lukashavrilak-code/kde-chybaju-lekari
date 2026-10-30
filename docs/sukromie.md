@@ -36,4 +36,4 @@ Ak je chyba priamo v registri, napríklad nesprávna adresa, opravu treba žiada
 
 - Stránka nepoužíva cookies, analytické nástroje ani formuláre a nič si o vás neukladá.
 - Mapové podklady sa načítavajú zo serverov OpenStreetMap. Tie pri tom vidia IP adresu vášho prehliadača.
-- Hosting GitHub Pages vedie technické záznamy o prístupoch (napríklad IP adresy) podľa vyhlásenia o ochrane súkromia spoločnosti GitHub.
+- Hosting GitHub Pages vedie technické záznamy o prístupoch (napríklad IP adresy) podľa vyhlásenia o ochrane súkromia spoločnosti GitHub. GitHub tieto údaje spracúva aj v USA. Pri prenose z EÚ sa podľa svojho vyhlásenia opiera o štandardné zmluvné doložky a o rámec EU-U.S. Data Privacy Framework.
