@@ -4,7 +4,7 @@ Všetky príkazy spúšťaj v priečinku projektu s aktivovaným prostredím (`.
 
 ## Prvé nastavenie
 
-1. V `config.toml` doplň `[projekt]` prevádzkovateľa a URL repozitára. Odkazy poisťovní (`[[web.poistovne]]`) sú vyplnené (O9).
+1. V `config.toml` doplň `[projekt]` prevádzkovateľa a URL repozitára. Možnosti hostingu sú v [zverejnenie.md](zverejnenie.md). Odkazy poisťovní (`[[web.poistovne]]`) sú vyplnené (O9).
 2. Vytvor `config.local.toml` (nie je v Gite) s projektovým e-mailom. Používa ho Nominatim aj web:
    ```toml
    [projekt]

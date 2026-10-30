@@ -65,7 +65,7 @@ Ostrý beh s reálnymi dátami popisuje [docs/runbook.md](docs/runbook.md). Ako 
 |---|---|
 | `pipeline/` | kroky spracovania, jeden modul na krok |
 | `web/` | šablóny stránok, CSS, JS a lokálna kópia Leaflet |
-| `docs/` | metodika, ochrana súkromia, test oprávneného záujmu, zdroje a licencie, overenia, runbook, sprievodca projektom |
+| `docs/` | metodika, ochrana súkromia, test oprávneného záujmu, zdroje a licencie, overenia, runbook, sprievodca projektom, možnosti zverejnenia (`zverejnenie.md`) |
 | `data/manual`, `data/history` | ručné opravy a agregovaná história (bez osobných údajov) |
 | `data/raw`, `data/snapshots`, `data/cache`, `data/local` | surové dáta, archív snapshotov registra, cache geokódovania, databáza a reporty – iba lokálne, mimo Gitu (záloha podľa runbooku) |
 | `tests/` | testy pytest |
