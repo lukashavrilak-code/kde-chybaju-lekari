@@ -66,7 +66,8 @@ SIDLA = [
     ("999999", "hlavné mesto", 0, 0, 4000, 4000),
 ]
 
-NCZI = {"T2": ("Slovenská republika", 9, 3), "T2_1": ("Testovací kraj", 7, 2), "T2_2": ("Vzorový kraj", 2, 1)}
+NCZI = {"T2": ("Slovenská republika", 9, 3, 8.5, 2.75), "T2_1": ("Testovací kraj", 7, 2, 6.75, 1.75),
+        "T2_2": ("Vzorový kraj", 2, 1, 1.75, 1.0)}
 NCZI_HEADER = ["Druh odborného útvaru - výstup", "Kód odborného zamerania útvaru", "Odborné zameranie útvaru",
                "Počet útvarov", "Počet pracovných miest - Lekári"]
 
@@ -98,6 +99,7 @@ def apply(cfg):
     cfg["nczi"]["povolene_domeny"] = []
     cfg["nczi"]["harky"] = {"T2": "SR", "T2_1": "91", "T2_2": "92"}
     cfg["nczi"]["kontrola_sr"] = {"VLD": NCZI["T2"][1], "VLDD": NCZI["T2"][2]}
+    cfg["nczi"]["kontrola_uvazky_sr"] = {"VLD": NCZI["T2"][3], "VLDD": NCZI["T2"][4]}
     cfg["ocakavane"] = {"okresy": 3, "kraje": 2}
     cfg["validacia"]["ocakavane_pocty"] = {"VLD": 16, "VLDD": 4}
     cfg["validacia"]["max_zlych_kodov"] = 0.05
@@ -174,7 +176,7 @@ def write_population():
 def write_nczi():
     wb = openpyxl.Workbook()
     wb.remove(wb.active)
-    for sheet, (area, vld, vldd) in NCZI.items():
+    for sheet, (area, vld, vldd, vld_fte, vldd_fte) in NCZI.items():
         ws = wb.create_sheet(sheet)
         ws.append(["Výstup o sieti poskytovateľov zdravotnej starostlivosti – umelé testovacie dáta"])
         ws.append([f"{sheet} Prehľad siete"])
@@ -183,8 +185,8 @@ def write_nczi():
         ws.append(NCZI_HEADER)
         ws.append(["Spolu", None, None, vld + vldd + 5])
         ws.append(["ambulancia_výstup", "001", "vnútorné lekárstvo", 5, 4.5])
-        ws.append(["ambulancia_výstup", "008", "všeobecná starostlivosť o deti a dorast", vldd, 1.0])
-        ws.append(["ambulancia_výstup", "020", "všeobecné lekárstvo", vld, 1.0])
+        ws.append(["ambulancia_výstup", "008", "všeobecná starostlivosť o deti a dorast", vldd, vldd_fte])
+        ws.append(["ambulancia_výstup", "020", "všeobecné lekárstvo", vld, vld_fte])
         ws.append(["pracovisko_výstup", "020", "všeobecné lekárstvo", 99, 0.0])
     target = path("raw", "nczi", "vystup_S01_2024_T2.xlsx")
     target.parent.mkdir(parents=True, exist_ok=True)

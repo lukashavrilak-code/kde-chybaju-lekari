@@ -34,10 +34,29 @@
   </details>
 </section>
 {% endfor %}
+<section class="rebricek" id="kraje">
+  <h2>Kraje: ambulancie v registri a úväzky lekárov podľa NCZI</h2>
+  <p>Register ÚDZS uvádza ambulancie, nie lekárov. Koľko lekárov v nich pracuje, uvádza NCZI ako úväzky (pracovné miesta), iba za Slovensko a kraje a za rok {{ rok_nczi }}. Obyvatelia: {{ popis_obyvatelstva }}. <a href="metodika.html#u9">Definícia ukazovateľa U9</a></p>
+{% for typ in typy %}
+  <div class="tabulka-obal">
+  <table class="tabulka">
+    <caption>{{ nazvy_typov[typ] }}</caption>
+    <thead>
+      <tr><th scope="col">Kraj</th><th scope="col" class="cislo">Ambulancie v registri</th><th scope="col" class="cislo">Na 10&nbsp;000 {{ menovatele[typ] }}</th><th scope="col" class="cislo">Úväzky lekárov NCZI {{ rok_nczi }}</th><th scope="col" class="cislo">Úväzky na 10&nbsp;000 {{ menovatele[typ] }}</th><th scope="col" class="cislo">Úväzok na útvar</th></tr>
+    </thead>
+    <tbody>
+{% for r in kraje[typ] %}
+      <tr><td>{% if r.kraj_kod == "SR" %}<strong>{{ r.kraj }}</strong>{% else %}{{ r.kraj }}{% endif %}</td><td class="cislo">{{ r.pocet|cislo }}</td><td class="cislo">{{ r.na_10k|cislo(2) }}</td><td class="cislo">{% if r.uvazky is not none %}{{ r.uvazky|cislo(2) }}{% else %}–{% endif %}</td><td class="cislo">{% if r.uvazky_na_10k is not none %}{{ r.uvazky_na_10k|cislo(2) }}{% else %}–{% endif %}</td><td class="cislo">{% if r.uvazky_na_utvar is not none %}{{ r.uvazky_na_utvar|cislo(2) }}{% else %}–{% endif %}</td></tr>
+{% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% endfor %}
+</section>
 <section class="obmedzenia">
   <h2>Na čo pri čítaní dávať pozor</h2>
   <ul>
-    <li>Počítame ambulancie v registri, nie lekárov ani ich úväzky. Register neuvádza, či ambulancia prijíma nových pacientov.</li>
+    <li>V okresoch počítame ambulancie v registri, nie lekárov ani ich úväzky. Úväzky lekárov uvádzame iba za kraje, podľa NCZI. Register neuvádza, či ambulancia prijíma nových pacientov.</li>
     <li>V malých okresoch zmení jedna ambulancia hodnotu výrazne.</li>
     <li>Ľudia chodia k lekárovi aj do susedného okresu, najmä do miest. Počet na obyvateľa okresu to nezachytí, preto uvádzame aj ukazovateľ v okolí {{ spadova_oblast_km }} km.</li>
   </ul>

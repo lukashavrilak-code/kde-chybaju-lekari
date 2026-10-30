@@ -3,7 +3,7 @@ import sqlite3
 from .checks import PipelineError
 from .config import ROOT, project_path
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshot (
     snapshot_id     INTEGER PRIMARY KEY,
@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS nczi_porovnanie (
     kraj_kod    TEXT NOT NULL,
     register    INTEGER NOT NULL,
     nczi        INTEGER NOT NULL,
+    uvazky      REAL,
     PRIMARY KEY (snapshot_id, typ, kraj_kod)
 );
 
@@ -168,6 +169,11 @@ def migrate(cfg, con):
     if version < 5 and has_tables:
         con.executescript("DROP TABLE IF EXISTS ukazovatel_okres; DROP TABLE IF EXISTS ukazovatel_obec;")
         print("Databáza prevedená na verziu 5 (ukazovatele treba znovu vypočítať príkazom compute: nový U8).")
+    if version < 6 and has_tables:
+        columns = {r[1] for r in con.execute("PRAGMA table_info(nczi_porovnanie)")}
+        if columns and "uvazky" not in columns:
+            con.execute("ALTER TABLE nczi_porovnanie ADD COLUMN uvazky REAL")
+        print("Databáza prevedená na verziu 6 (spusti nczi a export: úväzky lekárov z NCZI, U9).")
     con.executescript(SCHEMA)
     con.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     con.commit()

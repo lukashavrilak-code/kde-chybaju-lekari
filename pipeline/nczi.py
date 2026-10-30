@@ -35,16 +35,23 @@ def ensure_file(cfg, force=False):
     return path
 
 
+def to_number(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def read_nczi(path, cfg):
     settings = cfg["nczi"]
     codes = {code: typ for typ, code in cfg["odbornosti"].items()}
-    counts, areas = {}, {}
+    counts, fte, areas = {}, {}, {}
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True, keep_links=False)
     try:
         for sheet, kraj in settings["harky"].items():
             if sheet not in wb.sheetnames:
                 continue
-            column = None
+            column = fte_column = None
             for row in wb[sheet].iter_rows(values_only=True):
                 cells = ["" if c is None else str(c).strip() for c in row]
                 if column is None:
@@ -53,14 +60,18 @@ def read_nczi(path, cfg):
                         areas[kraj] = title.split(":", 1)[-1].strip()
                     if settings["stlpec"] in cells:
                         column = cells.index(settings["stlpec"])
+                        if settings["stlpec_uvazky"] in cells:
+                            fte_column = cells.index(settings["stlpec_uvazky"])
                     continue
                 if len(cells) > column and cells[0] == settings["riadok"]:
                     code = cells[1].removesuffix(".0").zfill(3)
                     if code in codes:
                         counts[(codes[code], kraj)] = int(float(row[column]))
+                        if fte_column is not None and len(row) > fte_column:
+                            fte[(codes[code], kraj)] = round(to_number(row[fte_column]), 2)
     finally:
         wb.close()
-    return counts, areas
+    return counts, fte, areas
 
 
 def load_register(con, sid):
@@ -98,7 +109,7 @@ def register_counts(amb, kraje):
     return result
 
 
-def check_file(cfg, checks, counts, areas, kraj_names):
+def check_file(cfg, checks, counts, fte, areas, kraj_names):
     settings = cfg["nczi"]
     sr_ok = all(counts.get((typ, SR)) == settings["kontrola_sr"][typ] for typ in TYPES)
     found = ", ".join(f"{typ} {counts.get((typ, SR))}" for typ in TYPES)
@@ -106,9 +117,17 @@ def check_file(cfg, checks, counts, areas, kraj_names):
     if not sr_ok:
         return False
     kraje = [k for k in settings["harky"].values() if k != SR]
+    tolerance = settings["tolerancia_uvazky"]
     for typ in TYPES:
         total = sum(counts.get((typ, k), 0) for k in kraje)
         checks.check("V3.7", total == counts[(typ, SR)], f"NCZI {typ}: súčet krajov sa rovná SR", f"{total} / {counts[(typ, SR)]}", "WARN")
+        sr_fte = fte.get((typ, SR))
+        expected = settings["kontrola_uvazky_sr"][typ]
+        checks.check("V3.7", sr_fte is not None and abs(sr_fte - expected) <= tolerance,
+                     f"NCZI {typ}: úväzky lekárov za SR sa rovnajú overenej hodnote", f"{sr_fte} / {expected}", "WARN")
+        fte_total = round(sum(fte.get((typ, k), 0.0) for k in kraje), 2)
+        checks.check("V3.7", sr_fte is not None and abs(fte_total - sr_fte) <= tolerance,
+                     f"NCZI {typ}: súčet úväzkov krajov sa rovná SR", f"{fte_total} / {sr_fte}", "WARN")
     wrong = [f"{k}: {areas.get(k)}" for k in kraje
              if not norm_name(areas.get(k, "")).startswith(norm_name(kraj_names.get(k, "?")))]
     checks.check("V3.7", not wrong, "poradie hárkov NCZI zodpovedá kódom krajov", f"{len(wrong)} nezhôd", "WARN",
@@ -116,7 +135,7 @@ def check_file(cfg, checks, counts, areas, kraj_names):
     return True
 
 
-def compare(cfg, con, checks, sid, amb, counts, kraj_names):
+def compare(cfg, con, checks, sid, amb, counts, fte, kraj_names):
     settings = cfg["nczi"]
     kraje = [k for k in settings["harky"].values() if k != SR]
     ours = register_counts(amb, kraje)
@@ -133,12 +152,12 @@ def compare(cfg, con, checks, sid, amb, counts, kraj_names):
                 f"{fmt_ratio(settings['pomer_min'])} – {fmt_ratio(settings['pomer_max'])}",
                 f"register {mine} / NCZI {reference} = {fmt_ratio(value)}", "WARN",
             )
-            rows.append((sid, settings["rok"], typ, kraj, mine, reference))
+            rows.append((sid, settings["rok"], typ, kraj, mine, reference, fte.get((typ, kraj))))
         unknown = int(((amb["typ"] == typ) & amb["kraj_kod"].isna()).sum())
         checks.info("V3.7", f"{typ}: ambulancie bez jednoznačného kraja z adresy v registri", unknown)
     con.execute("DELETE FROM nczi_porovnanie WHERE snapshot_id = ?", (sid,))
     con.executemany(
-        "INSERT INTO nczi_porovnanie (snapshot_id, rok, typ, kraj_kod, register, nczi) VALUES (?, ?, ?, ?, ?, ?)", rows
+        "INSERT INTO nczi_porovnanie (snapshot_id, rok, typ, kraj_kod, register, nczi, uvazky) VALUES (?, ?, ?, ?, ?, ?, ?)", rows
     )
 
 
@@ -247,15 +266,15 @@ def nczi(cfg, con, snapshot, force=False):
     checks = Checks(con, "3-nczi", sid)
     try:
         path = ensure_file(cfg, force)
-        counts, areas = read_nczi(path, cfg)
+        counts, fte, areas = read_nczi(path, cfg)
     except (PipelineError, OSError, ValueError) as error:
         checks.check("V3.7", False, "súbor NCZI je dostupný (kontrola sa preskočila)", "", "WARN", detail=str(error))
         checks.done()
         return
     kraj_names = {r["kraj_kod"]: r["kraj_nazov"] for r in con.execute("SELECT DISTINCT kraj_kod, kraj_nazov FROM okres")}
-    if check_file(cfg, checks, counts, areas, kraj_names):
+    if check_file(cfg, checks, counts, fte, areas, kraj_names):
         amb = load_register(con, sid)
-        compare(cfg, con, checks, sid, amb, counts, kraj_names)
+        compare(cfg, con, checks, sid, amb, counts, fte, kraj_names)
         report = write_gap_report(cfg, snapshot, amb, counts, kraj_names)
         checks.info("V3.7", "report rozdielu register vs. NCZI", report.name)
     checks.done()

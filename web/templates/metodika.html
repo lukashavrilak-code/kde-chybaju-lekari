@@ -26,10 +26,10 @@
 {% if nczi %}
 <h3>Porovnanie s tabuľkami NCZI</h3>
 <table class="tabulka">
-  <thead><tr><th scope="col">Typ</th><th scope="col">Kraj</th><th scope="col" class="cislo">Register</th><th scope="col" class="cislo">NCZI {{ nczi[0].rok }} (počet útvarov)</th><th scope="col" class="cislo">Pomer</th></tr></thead>
+  <thead><tr><th scope="col">Typ</th><th scope="col">Kraj</th><th scope="col" class="cislo">Register</th><th scope="col" class="cislo">NCZI {{ nczi[0].rok }} (počet útvarov)</th><th scope="col" class="cislo">Pomer</th><th scope="col" class="cislo">NCZI {{ nczi[0].rok }} (úväzky lekárov)</th></tr></thead>
   <tbody>
 {% for r in nczi %}
-    <tr><td>{{ r.typ }}</td><td>{{ r.kraj }}</td><td class="cislo">{{ r.register|cislo }}</td><td class="cislo">{{ r.nczi|cislo }}</td><td class="cislo">{% if r.pomer is not none %}{{ r.pomer|cislo(2) }}{% else %}–{% endif %}</td></tr>
+    <tr><td>{{ r.typ }}</td><td>{{ r.kraj }}</td><td class="cislo">{{ r.register|cislo }}</td><td class="cislo">{{ r.nczi|cislo }}</td><td class="cislo">{% if r.pomer is not none %}{{ r.pomer|cislo(2) }}{% else %}–{% endif %}</td><td class="cislo">{% if r.uvazky is not none %}{{ r.uvazky|cislo(2) }}{% else %}–{% endif %}</td></tr>
 {% endfor %}
   </tbody>
 </table>

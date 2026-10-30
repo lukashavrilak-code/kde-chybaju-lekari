@@ -35,6 +35,8 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
         assert con.execute("SELECT COUNT(*) FROM nczi_porovnanie").fetchone()[0] == 6
         nczi_results = {r[0] for r in con.execute("SELECT vysledok FROM validacia WHERE kod = 'V3.7'")}
         assert "WARN" in nczi_results and "FAIL" not in nczi_results
+        assert con.execute("SELECT uvazky FROM nczi_porovnanie WHERE typ = 'VLD' AND kraj_kod = 'SR'").fetchone() == (8.5,)
+        assert {r[0] for r in con.execute("SELECT vysledok FROM validacia WHERE kod = 'V3.7' AND popis LIKE '%úväzk%'")} == {"OK"}
         assert sum(r[0] for r in con.execute("SELECT obyv_deti FROM obec")) == 1156.5
         assert not con.execute("SELECT * FROM validacia WHERE kod = 'V4.3' AND vysledok = 'WARN'").fetchall()
         assert con.execute("SELECT obec_kod, zdroj FROM geokod WHERE adresa_kluc = 'dlhá 3|vzorkovce|04001'").fetchone() == (
@@ -63,6 +65,11 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
     assert "pocet_pracovisk" in okres_csv[0] and "podiel_nad_10km" in okres_csv[0] and "na_10k_okolie" in okres_csv[0]
     rebricky = (SITE / "rebricky.html").read_text(encoding="utf-8")
     assert 'id="mestske-okresy"' in rebricky and 'href="#mestske-okresy"' in rebricky
+    assert 'id="kraje"' in rebricky
+    kraj_csv = read_csv_rows(next((SITE / "downloads").glob("ukazovatele_kraje_*.csv")))
+    sr = next(r for r in kraj_csv if r["typ"] == "VLD" and r["kraj_kod"] == "SR")
+    assert sr["uvazky_nczi"] == "8.50" and sr["utvary_nczi"] == "9" and sr["pocet_ambulancii"] == "12"
+    assert len(kraj_csv) == 6
     assert "stredný stav 2025" in (SITE / "metodika.html").read_text(encoding="utf-8")
 
     ambulancie = json.loads((SITE / "data" / "ambulancie.json").read_text(encoding="utf-8"))["ambulancie"]

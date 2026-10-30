@@ -89,8 +89,11 @@ rok = "2024"
 referencny_datum = "2024-12-31"
 riadok = "ambulancia_výstup"
 stlpec = "Počet útvarov"
+stlpec_uvazky = "Počet pracovných miest - Lekári"
 harky = { T2 = "SR", T2_1 = "1", T2_2 = "2", T2_3 = "3", T2_4 = "4", T2_5 = "5", T2_6 = "6", T2_7 = "7", T2_8 = "8" }
 kontrola_sr = { VLD = 1891, VLDD = 885 }
+kontrola_uvazky_sr = { VLD = 1743.07, VLDD = 812.72 }
+tolerancia_uvazky = 0.01
 pomer_min = 0.8
 pomer_max = 1.6
 

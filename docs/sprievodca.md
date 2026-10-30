@@ -27,7 +27,7 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 | Stránka | Čo ukazuje | Šablóna | JavaScript | Dáta |
 |---|---|---|---|---|
 | Mapa | okresy zafarbené podľa U2 alebo U8, obce podľa vzdialenosti (U3), legenda, panel okresu a obce, vyhľadanie obce | `index.html` | všetky moduly | `meta.json`, `okresy.geojson`, neskôr `obce.json` a `ambulancie.json` |
-| Rebríčky | 10 najhorších okresov podľa U2 a podľa U8, 10 najlepších podľa U2, celé poradie s pracoviskami a U8, poznámka k mestským okresom | `rebricky.html` | žiadny | vypočítané v Pythone pri exporte |
+| Rebríčky | 10 najhorších okresov podľa U2 a podľa U8, 10 najlepších podľa U2, celé poradie s pracoviskami a U8, poznámka k mestským okresom, tabuľka krajov s úväzkami lekárov z NCZI (U9) | `rebricky.html` | žiadny | vypočítané v Pythone pri exporte |
 | Dáta | CSV na stiahnutie a popis stĺpcov | `data.html` | žiadny | `downloads/*.csv` |
 | Metodika | text z `docs/metodika.md` a tabuľka „Aktuálny stav dát“ | `metodika.html` | žiadny | – |
 | Súkromie | text z `docs/sukromie.md`, prevádzkovateľ a kontakt | `sukromie.html` | žiadny | – |
@@ -117,7 +117,7 @@ Príkaz `python -m pipeline all` spustí kroky v tomto poradí. Každý krok sa 
 | 2 | `areas` | `areas.py` | hranice obcí ZBGIS, body sídiel ZBGIS (geografické názvy), dva súbory STATdata (0–17 a 18+) | tabuľky `obec` a `okres`, `data/local/uzemia/` | V1.5 súradnicový systém a stĺpce, V3.4 geometrie a 79 okresov, V3.5 obyvatelia (súčet = SR), V3.6 zjednodušenie hraníc, V3.9 bod sídla každej obce |
 | 3 | `validate` | `validate.py` | snapshot registra | tabuľka `odbornost_pocet` | V2.1 stĺpce, V2.2 zmena počtu riadkov, V2.3 formát kódu, V2.4 počty 020 a 008, V2.5 dátumy, V2.6 jedinečnosť kódov, V2.7 texty |
 | 4 | `clean` | `clean.py` | snapshot, `data/local/blocklist.csv`, `data/manual/obec_mapping.csv` | tabuľky `ambulancia` a `adresa_obec` | V3.0 výber, V3.1 blocklist, V3.2 adresa, V3.3 možné duplicity, V3.8 obec z adresy |
-| 5 | `nczi` | `nczi.py` | súbor NCZI (stiahne sa raz) | tabuľka `nczi_porovnanie`, report `nczi_rozdiel_*.md` | V3.7 pomer register / NCZI (iba upozornenie) |
+| 5 | `nczi` | `nczi.py` | súbor NCZI (stiahne sa raz) | tabuľka `nczi_porovnanie` (počty útvarov aj úväzky lekárov), report `nczi_rozdiel_*.md` | V3.7 pomer register / NCZI, úväzky za SR a súčet krajov (iba upozornenie) |
 | 6 | `geocode` | `geocode.py` | adresy ambulancií, cache, `data/manual/geocode_overrides.csv` | tabuľka `geokod`, `data/cache/geocode_cache.csv`, reporty `geokod_*.csv` | V4.1 až V4.6 poloha, obec, presnosť, zhluky |
 | 7 | `compute` | `compute.py` | ambulancie s polohou, obce, okresy | tabuľky `ukazovatel_okres` a `ukazovatel_obec`, `data/history/pocty_okresy.csv` | V5.1 súčty, V5.2 menovateľ a odľahlé hodnoty, V5.4 zmeny v čase, V5.5 konzistentnosť, V5.6 obce s ambulanciou, no s referenčným bodom ďaleko od nej, V5.7 U8 rozdelí všetky ambulancie presne raz |
 | 8 | `export` | `export.py`, `site.py` | všetky tabuľky | `site/` (HTML, `data/*.json`, `downloads/*.csv`), report validácie | V6.1 až V6.6 povolené kľúče, veľkosti súborov, súradnice, upozornenie, typy súborov, CSV bez vzorcov |
@@ -143,7 +143,7 @@ Všetky medzivýsledky sú v SQLite súbore `data/local/lekari.sqlite`. Schéma 
 | `adresa_obec` | ku ktorej obci (obciam) patrí názov obce z adresy | `adresa_kluc`, `obec_kod` |
 | `obec` | 2 927 obcí: názov, okres, kraj, referenčný bod a jeho zdroj (`ref_zdroj`: `sidlo` alebo `stred`), obyvatelia | `obec_kod` |
 | `okres` | 79 okresov: názov, kraj, súčty obyvateľov | `okres_kod` |
-| `nczi_porovnanie` | naše počty a počty NCZI po krajoch | `snapshot_id`, `typ`, `kraj_kod` |
+| `nczi_porovnanie` | naše počty, počty útvarov NCZI a úväzky lekárov NCZI (`uvazky`) po krajoch | `snapshot_id`, `typ`, `kraj_kod` |
 | `ukazovatel_okres` | U1, U2, U5, U6, U7, U8 pre každý okres a typ | `snapshot_id`, `okres_kod`, `typ` |
 | `ukazovatel_obec` | U3, U4, U8 pre každú obec a typ | `snapshot_id`, `obec_kod`, `typ` |
 | `zdroj` | odtlačky vstupných súborov ZBGIS a STATdata | `zdroj_id` |
@@ -234,6 +234,16 @@ Pracovisko je jedna dvojica IČO + adresa. Ak má poskytovateľ na jednej adrese
 ### Porovnanie s NCZI (V3.7)
 
 Pre každý kraj sa počíta pomer register / NCZI. Mimo rozsahu 0,8 – 1,6 kontrola iba upozorní a nikdy nezastaví zverejnenie. Kraj sa tu určuje z názvu obce v adrese. Ak názov obce existuje vo viacerých krajoch, ambulancia sa započíta iba do Slovenska. Prečo je register vyšší, rozoberá `docs/overenia.md`, časť O14.
+
+### U9: úväzky lekárov po krajoch
+
+Kód v registri nie je lekár. Koľko lekárov v ambulanciách naozaj pracuje, uvádza NCZI ako **pracovné miesta**: súčet úväzkov prepočítaný na plný úväzok (dvaja lekári na polovičný úväzok = 1,0). NCZI ich uvádza iba za Slovensko a kraje. Počíta ich funkcia `kraj_rows()` v `export.py`, čítanie je v `read_nczi()` v `nczi.py`.
+
+Príklad z `tests/test_kraje.py`: kraj má 40 000 dospelých, 20 ambulancií v registri, 16 útvarov a 14 úväzkov podľa NCZI. Ambulancií na 10 000 je 20 / 40 000 × 10 000 = 5,0, úväzkov 14 / 40 000 × 10 000 = 3,5 a na jeden útvar pripadá 14 / 16 = 0,88 úväzku.
+
+Za Slovensko (register k 1. 10. 2026, NCZI 2024): VLD 5,54 ambulancie, ale iba 3,97 úväzku lekára na 10 000 dospelých. Pediatri: 10,79 ambulancie a 7,96 úväzku na 10 000 detí. Na jeden útvar NCZI pripadá v priemere 0,92 úväzku. Najviac úväzkov VLD na obyvateľa má Košický kraj (4,84), najmenej Trnavský (3,43). Pri pediatroch je najmenej Bratislavský kraj (6,39).
+
+Kontrola: U9 × 10 sa takmer rovná tabuľke NCZI T2.9 (na 100 000 obyvateľov). Pri VLD je rozdiel najviac 0,4 %, pri pediatroch 0,1 až 0,8 %, lebo NCZI pravdepodobne delí iným rokom obyvateľov (O20).
 
 ### Zmeny v čase (V5.4)
 
@@ -389,7 +399,8 @@ GROUP BY typ;
 ```sql
 WITH posledny AS (SELECT snapshot_id FROM snapshot ORDER BY stav_k DESC LIMIT 1)
 SELECT n.typ, COALESCE(k.kraj_nazov, 'Slovensko') AS kraj, n.register, n.nczi,
-       ROUND(1.0 * n.register / n.nczi, 2) AS pomer
+       ROUND(1.0 * n.register / n.nczi, 2) AS pomer, n.uvazky,
+       ROUND(n.uvazky / n.nczi, 2) AS uvazok_na_utvar
 FROM nczi_porovnanie n
 JOIN posledny USING (snapshot_id)
 LEFT JOIN (SELECT DISTINCT kraj_kod, kraj_nazov FROM okres) k ON k.kraj_kod = n.kraj_kod

@@ -2,7 +2,7 @@
 {% block title %}Dáta na stiahnutie – {% endblock %}
 {% block main %}
 <h1>Dáta na stiahnutie</h1>
-<p>Na stiahnutie sú naše vypočítané ukazovatele za okresy a obce. Zoznam poskytovateľov ani počty obyvateľov tu nezverejňujeme. Register je dostupný priamo na webe ÚDZS, počty obyvateľov v databáze STATdata Štatistického úradu SR.</p>
+<p>Na stiahnutie sú naše vypočítané ukazovatele za okresy, obce a kraje. Zoznam poskytovateľov ani počty obyvateľov tu nezverejňujeme. Register je dostupný priamo na webe ÚDZS, počty obyvateľov v databáze STATdata Štatistického úradu SR.</p>
 <ul class="subory">
 {% for subor in subory_csv %}
   <li><a href="downloads/{{ subor.nazov }}" download>{{ subor.nazov }}</a> ({{ subor.kb|cislo(1) }} KB)</li>
@@ -34,6 +34,18 @@
     <tr><td>pocet_v_obci, pocet_do_{{ polomery[0] }}km, pocet_do_{{ polomery[1] }}km</td><td>počet ambulancií v obci a do danej vzdušnej vzdialenosti (<a href="metodika.html#u4">U4</a>)</td></tr>
     <tr><td>na_10k_okolie</td><td>ambulancie na 10&nbsp;000 obyvateľov v okolí {{ spadova_oblast_km }} km od obce, pri VLD na dospelých a pri VLDD na deti (<a href="metodika.html#u8">U8</a>)</td></tr>
     <tr><td>stav_registra, verzia_pipeline</td><td>dátum registra a verzia výpočtu</td></tr>
+  </tbody>
+</table>
+<h2>Stĺpce – kraje</h2>
+<table class="tabulka">
+  <thead><tr><th scope="col">Stĺpec</th><th scope="col">Význam</th></tr></thead>
+  <tbody>
+    <tr><td>kraj_kod, kraj</td><td>kód a názov kraja, SR = Slovensko</td></tr>
+    <tr><td>pocet_ambulancii, na_10k</td><td>ambulancie v registri podľa polohy (súčet okresov) a na 10&nbsp;000 obyvateľov uvedenej vekovej skupiny</td></tr>
+    <tr><td>menovatel, obyvatelia</td><td>veková skupina a počet jej obyvateľov v kraji ({{ popis_obyvatelstva }})</td></tr>
+    <tr><td>uvazky_nczi, uvazky_na_10k</td><td>úväzky lekárov (pracovné miesta) v ambulanciách podľa NCZI za rok {{ rok_nczi }} a na 10&nbsp;000 obyvateľov (<a href="metodika.html#u9">U9</a>)</td></tr>
+    <tr><td>utvary_nczi, uvazky_na_utvar</td><td>počet útvarov podľa NCZI a priemerný úväzok lekárov na útvar, oboje za rok {{ rok_nczi }}</td></tr>
+    <tr><td>rok_nczi, stav_registra, stav_obyvatelstva, verzia_pipeline</td><td>roky a dátumy zdrojových dát a verzia výpočtu</td></tr>
   </tbody>
 </table>
 <h2>Licencia a citácia</h2>

@@ -12,7 +12,7 @@ Stránka **neukazuje**, či ambulancia prijíma nových pacientov, aké má ordi
 | Štatistický úrad SR – STATdata, tabuľka om7006rr | počet obyvateľov obcí vo veku 0 – 17 a 18+ (menovateľ) | CC BY 4.0, „Zdroj: Štatistický úrad SR, CC BY 4.0, www.statistics.sk“ |
 | ÚGKK SR – ZBGIS | hranice obcí a okresov, bod sídla každej obce (geografické názvy obcí) | CC BY 4.0, hranice sú pre web zjednodušené |
 | OpenStreetMap – Nominatim | poloha (súradnice) adries ambulancií | © OpenStreetMap contributors, ODbL |
-| NCZI – výstup S01 o sieti poskytovateľov (tabuľky T2) | iba kontrola našich počtov po krajoch | citujeme zdroj |
+| NCZI – výstup S01 o sieti poskytovateľov (tabuľky T2) | kontrola našich počtov po krajoch a úväzky lekárov po krajoch (U9) | citujeme zdroj |
 
 Dátum stavu registra a obyvateľstva je uvedený na každej stránke a v časti [Aktuálny stav dát](#aktualne).
 
@@ -107,6 +107,20 @@ Obmedzenia: vzdialenosť je vzdušnou čiarou z referenčného bodu obce. Polome
 
 Zdroj metódy: Luo W., Wang F. (2003): Measures of spatial accessibility to health care in a GIS environment: synthesis and a case study in the Chicago region. Environment and Planning B 30(6), 865 – 884, doi:10.1068/b29120.
 
+<a id="u9"></a>
+
+### U9 – Úväzky lekárov na 10 000 obyvateľov (kraj)
+
+Register ÚDZS hovorí, koľko je ambulancií, ale nie, koľko lekárov v nich pracuje. Tento údaj zverejňuje NCZI vo výstupe S01 (tabuľky T2, stĺpec „Počet pracovných miest – Lekári“, riadky „ambulancia_výstup“, odbornosti 008 a 020). Pracovné miesto je podľa NCZI súčet úväzkov pracovníkov prepočítaný na plný pracovný čas, takže dvaja lekári na polovičný úväzok sú jedno pracovné miesto.
+
+**U9 = úväzky lekárov v kraji / menovateľ × 10 000**, zaokrúhlené na dve desatinné miesta. Menovateľ je rovnaký ako pri U2 (18+ pri VLD, 0 – 17 pri pediatroch), sčítaný za okresy kraja. Uvádzame aj priemerný úväzok na jeden útvar NCZI (úväzky / počet útvarov, oboje z NCZI).
+
+Kontrola: súčet úväzkov za kraje sa musí rovnať údaju za Slovensko a údaj za Slovensko overenej hodnote (VLD 1 743,07, VLDD 812,72).
+
+Porovnanie s NCZI: tabuľka T2.9 uvádza úväzky na 100 000 obyvateľov rovnakých vekových skupín. Pri VLD sa naše hodnoty (×10) líšia najviac o 0,4 %. Pri pediatroch sú o 0,1 až 0,8 % vyššie, pravdepodobne preto, že NCZI delí iným rokom obyvateľstva (OVERIŤ, O20).
+
+Obmedzenia: NCZI uvádza úväzky iba za Slovensko a kraje, za okresy nie. Údaje NCZI sú za rok 2024, obyvatelia za rok 2025 a register k inému dátumu. Útvar v NCZI nemusí zodpovedať jednému kódu v registri (O8), preto úväzky nedelíme počtom ambulancií v registri. Úväzok nehovorí o tom, či lekár prijíma nových pacientov.
+
 ## Poloha ambulancií
 
 Adresu ambulancie (miesto prevádzkovania podľa registra) prevádzame na súradnice cez službu OpenStreetMap Nominatim. Posielame jej iba adresu, nikdy názov poskytovateľa. Výsledky ukladáme a tú istú adresu sa nepýtame dvakrát.
@@ -158,7 +172,7 @@ Záznamy kvôli tomuto rozdielu nefiltrujeme. Každý platný kód v registri po
 
 - Register obsahuje kódy poskytovateľov. Existencia kódu neznamená, že ambulancia skutočne funguje alebo má zmluvu so zdravotnou poisťovňou.
 - Register neuvádza, či ambulancia prijíma nových pacientov, ordinačné hodiny, telefón, počet lekárov ani meno ordinujúceho lekára. Pri spoločnostiach je uvedený iba názov firmy.
-- Počet ambulancií nie je kapacita: nehovorí o úväzkoch ani o počte pacientov.
+- Počet ambulancií nie je kapacita: nehovorí o úväzkoch ani o počte pacientov. Úväzky lekárov poznáme iba za kraje (U9).
 - Vzdialenosti sú vzdušnou čiarou, nie po ceste.
 - Zdroje majú rôzne dátumy stavu.
 - Hranice obcí sú na webe zjednodušené. Výpočty používajú presné hranice.
@@ -171,7 +185,7 @@ Každý výstup nesie dátum zdrojových dát a verziu výpočtu. Celý postup j
 
 | Verzia | Dátum | Zmena |
 |---|---|---|
-| 0.1.0 | október 2026 | prvá verzia: ukazovatele U1 až U5, doplnkový U6 (pracoviská), U7 (podiel obyvateľov ďalej ako 5 a 10 km) a U8 (ambulancie v okolí 10 km, 2SFCA); referenčný bod obce je bod sídla zo ZBGIS; obyvatelia zo STATdata (om7006rr, stredný stav 2025); kontrola s NCZI S01 2024; poloha musí ležať v obci z registra (tolerancia 300 m) |
+| 0.1.0 | október 2026 | prvá verzia: ukazovatele U1 až U5, doplnkový U6 (pracoviská), U7 (podiel obyvateľov ďalej ako 5 a 10 km) a U8 (ambulancie v okolí 10 km, 2SFCA), U9 (úväzky lekárov z NCZI 2024 po krajoch); referenčný bod obce je bod sídla zo ZBGIS; obyvatelia zo STATdata (om7006rr, stredný stav 2025); kontrola s NCZI S01 2024; poloha musí ležať v obci z registra (tolerancia 300 m) |
 
 <a id="oprava"></a>
 

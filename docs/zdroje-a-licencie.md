@@ -8,7 +8,7 @@
 | ÚGKK SR – ZBGIS, Geografické názvy (vrstva GNO) | bod sídla každej obce = referenčný bod obce pre vzdialenosti (U3, U4, U7) | CC BY 4.0, autor GKÚ Bratislava | `https://opendata.skgeodesy.sk/static/ZBGIS/gn/gn_gpkg.zip`, ručne stiahnuté do `data/raw/zbgis/gn/`; atribúcia v pätičke webu spolu s hranicami (O18) |
 | OpenStreetMap – Nominatim | súradnice adries ambulancií | ODbL, Nominatim Usage Policy | OVERIŤ OSMF Geocoding Guideline; atribúcia ODbL v `ambulancie.json` a na stránke Dáta |
 | OpenStreetMap – mapové dlaždice | podkladová mapa | Tile Usage Policy | atribúcia na mape; OVERIŤ požiadavku na Referer |
-| NCZI – výstup S01 o sieti poskytovateľov 2024, tabuľky T2 | iba kontrola počtov po krajoch | citovať zdroj | jednotka „Počet útvarov“, stav k 31. 12. 2024; OVERIŤ, či útvar = jeden kód PZS (O8) |
+| NCZI – výstup S01 o sieti poskytovateľov 2024, tabuľky T2 | kontrola počtov po krajoch, úväzky lekárov po krajoch (U9) | citovať zdroj | stĺpce „Počet útvarov“ a „Počet pracovných miest – Lekári“, stav k 31. 12. 2024; OVERIŤ, či útvar = jeden kód PZS (O8) |
 | Leaflet 1.9.4 | mapová knižnica | BSD-2-Clause | text licencie v `web/static/vendor/leaflet-1.9.4/LICENSE` |
 
 ## Naše výstupy

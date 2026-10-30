@@ -22,6 +22,8 @@ OKRES_CSV = ["okres_kod", "okres", "kraj", "typ", "pocet_ambulancii", "pocet_pra
              *FAR_COLUMNS, "na_10k_okolie", "poradie_okolie", "stav_registra", "stav_obyvatelstva", "verzia_pipeline"]
 OBEC_CSV = ["obec_kod", "obec", "okres", "typ", "najblizsia_km", "pocet_v_obci", "pocet_do_10km", "pocet_do_20km",
             "na_10k_okolie", "stav_registra", "verzia_pipeline"]
+KRAJ_CSV = ["kraj_kod", "kraj", "typ", "pocet_ambulancii", "na_10k", "menovatel", "obyvatelia", "uvazky_nczi", "uvazky_na_10k",
+            "utvary_nczi", "uvazky_na_utvar", "rok_nczi", "stav_registra", "stav_obyvatelstva", "verzia_pipeline"]
 
 
 def pipeline_version():
@@ -143,6 +145,20 @@ def csv_rows(okresy, obce, okres_ind, obec_ind, types, meta):
     return okres_rows, obec_rows
 
 
+def kraj_csv_rows(kraje, rok, meta):
+    def number(value, digits=2):
+        return "" if value is None else f"{value:.{digits}f}"
+    return [
+        {"kraj_kod": r["kraj_kod"], "kraj": r["kraj"], "typ": r["typ"], "pocet_ambulancii": r["pocet"],
+         "na_10k": number(r["na_10k"]), "menovatel": DENOMINATOR_NAMES[r["typ"]], "obyvatelia": number(r["menovatel"], 1),
+         "uvazky_nczi": number(r["uvazky"]), "uvazky_na_10k": number(r["uvazky_na_10k"]),
+         "utvary_nczi": "" if r["utvary"] is None else r["utvary"], "uvazky_na_utvar": number(r["uvazky_na_utvar"]),
+         "rok_nczi": rok, "stav_registra": meta["stav_registra"], "stav_obyvatelstva": meta["stav_obyvatelstva"],
+         "verzia_pipeline": meta["verzia_pipeline"]}
+        for rows in kraje.values() for r in rows
+    ]
+
+
 def rankings(okresy, okres_ind, types, mestske):
     result = {}
     for typ in types:
@@ -200,10 +216,41 @@ def nczi_rows(con, sid, okresy, types):
     ).fetchall()
     return [
         {"typ": r["typ"], "kraj": "Slovensko" if r["kraj_kod"] == "SR" else names.get(r["kraj_kod"], r["kraj_kod"]),
-         "register": r["register"], "nczi": r["nczi"], "rok": r["rok"],
+         "register": r["register"], "nczi": r["nczi"], "uvazky": r["uvazky"], "rok": r["rok"],
          "pomer": round(r["register"] / r["nczi"], 2) if r["nczi"] else None}
         for r in rows if r["typ"] in types
     ]
+
+
+def kraj_rows(okresy, okres_ind, nczi, types):
+    by_kraj = okres_ind.merge(okresy[["okres_kod", "kraj_kod", "kraj_nazov"]].reset_index(drop=True), on="okres_kod")
+    capacity = {(r["typ"], r["kraj_kod"]): r for r in nczi}
+    result = {}
+    for typ in types:
+        part = by_kraj[by_kraj["typ"] == typ]
+        population = okresy.groupby("kraj_kod")[DENOMINATOR[typ]].sum()
+        names = okresy.drop_duplicates("kraj_kod").set_index("kraj_kod")["kraj_nazov"]
+        counts = part.groupby("kraj_kod")["pocet"].sum()
+        keys = [("SR", "Slovensko", int(part["pocet"].sum()), float(population.sum()))]
+        keys += [(k, names[k], int(counts.get(k, 0)), float(population[k])) for k in sorted(population.index)]
+        rows = []
+        for kraj_kod, nazov, pocet, menovatel in keys:
+            row = capacity.get((typ, kraj_kod), {})
+            fte, units = row.get("uvazky"), row.get("nczi")
+            rows.append({
+                "kraj_kod": kraj_kod, "kraj": nazov, "typ": typ, "pocet": pocet, "menovatel": menovatel,
+                "na_10k": round(pocet / menovatel * 10000, 2),
+                "uvazky": fte, "utvary": units,
+                "uvazky_na_10k": None if fte is None else round(fte / menovatel * 10000, 2),
+                "uvazky_na_utvar": round(fte / units, 2) if fte is not None and units else None,
+            })
+        result[typ] = rows
+    return result
+
+
+def nczi_capacity(con, sid):
+    rows = con.execute("SELECT typ, kraj_kod, nczi, uvazky FROM nczi_porovnanie WHERE snapshot_id = ?", (sid,)).fetchall()
+    return [dict(r) for r in rows]
 
 
 def sources(cfg, con, snapshot):
@@ -256,9 +303,13 @@ def export(cfg, con, snapshot):
     write_json(data_dir / "ambulancie.json", ambulancie)
 
     okres_rows, obec_rows = csv_rows(okresy, obce, okres_ind, obec_ind, types, {**base, "stav_obyvatelstva": stav_obyvatelstva})
+    kraje = kraj_rows(okresy, okres_ind, nczi_capacity(con, sid), types)
+    rok_nczi = cfg["nczi"]["rok"]
     csv_files = {
         f"ukazovatele_okresy_{snapshot['stav_k']}.csv": (okres_rows, OKRES_CSV),
         f"ukazovatele_obce_{snapshot['stav_k']}.csv": (obec_rows, OBEC_CSV),
+        f"ukazovatele_kraje_{snapshot['stav_k']}.csv": (
+            kraj_csv_rows(kraje, rok_nczi, {**base, "stav_obyvatelstva": stav_obyvatelstva}), KRAJ_CSV),
     }
     for name, (rows, columns) in csv_files.items():
         write_csv_rows(downloads / name, rows, columns, bom=True)
@@ -291,6 +342,8 @@ def export(cfg, con, snapshot):
         "popis_obyvatelstva": cfg["obyvatelia"]["popis"],
         "presnost": precision_shares(amb, types),
         "nczi": nczi_rows(con, sid, okresy, types),
+        "kraje": kraje,
+        "rok_nczi": rok_nczi,
         "atribucia_obyvatelia": cfg["obyvatelia"]["atribucia"],
         "validacia": validation_summary(con, sid),
         "subory_csv": [{"nazov": name, "kb": round(file_kb(downloads / name), 1)} for name in csv_files],
