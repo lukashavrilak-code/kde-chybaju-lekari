@@ -1,6 +1,6 @@
 import { el, formatKm, formatNa10k } from "./util.js";
 
-const PALETA = ["#104281", "#1c5cab", "#2a78d6", "#5598e7", "#86b6ef"];
+const PALETA = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#104281"];
 export const PALETA_VZDIALENOST = [...PALETA].reverse();
 const BEZ_UDAJOV = "#c3c2b7";
 const SLOVENSKO = [[47.73, 16.83], [49.61, 22.57]];
@@ -18,7 +18,7 @@ export function farbaHodnoty(hodnota, hranice, paleta = PALETA) {
 }
 
 export function vytvorMapu(idKontajnera, meta) {
-  const mapa = L.map(idKontajnera, { minZoom: 6, maxZoom: 17, zoomSnap: 0.5 });
+  const mapa = L.map(idKontajnera, { minZoom: 6, maxZoom: 17, zoomSnap: 0.5, renderer: L.canvas({ tolerance: 5 }) });
   mapa.fitBounds(SLOVENSKO);
   L.tileLayer(meta.tile_url, {
     maxZoom: 19,
@@ -75,7 +75,7 @@ export class VrstvaOkresov {
     this.lenObrys = lenObrys;
     this.vrstva.setStyle((feature) => this.styl(feature));
     this.vrstva.eachLayer((layer) => {
-      if (layer.feature.properties.kod === vybrany) layer.bringToFront();
+      if (layer.feature.properties.kod === vybrany && !lenObrys) layer.bringToFront();
     });
   }
 
@@ -180,7 +180,7 @@ export class VrstvaOkolia {
 export function vykresliLegendu(kontajner, nadpis, hranice, hodnoty, moznosti = {}) {
   const paleta = moznosti.paleta || PALETA;
   const format = moznosti.format || formatNa10k;
-  const poznamka = moznosti.poznamka || "Tmavšia farba = menej ambulancií. V zátvorke je počet okresov.";
+  const poznamka = moznosti.poznamka || "Tmavšia farba = viac ambulancií. V zátvorke je počet okresov.";
   const pocty = new Array(hranice.length + 1).fill(0);
   for (const hodnota of hodnoty) {
     const trieda = triedaHodnoty(hodnota, hranice);

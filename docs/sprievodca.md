@@ -47,6 +47,8 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 
 Pri otvorení mapy sa načítajú iba `meta.json` a `okresy.geojson`. Zoznam obcí (`obce.json`) sa načíta až pri kliknutí do vyhľadávania. Zoznam ambulancií (`ambulancie.json`) sa načíta až po výbere obce. Prvé načítanie je tak menšie.
 
+**Kreslenie na canvas.** Okresy, body obcí, okruhy aj body ambulancií kreslí Leaflet na jedno plátno (voľba `renderer: L.canvas()` vo funkcii `vytvorMapu()` v `map.js`). Pri 2 927 bodoch obcí je mapa plynulejšia ako pri SVG, kde je každý bod samostatný prvok stránky. Plátno je jedno pre všetky vrstvy, lebo samostatné plátno by ležalo nad ostatnými vrstvami a zachytilo by všetky kliky, takže okresy ani body ambulancií pod ním by nereagovali. `tolerance: 5` zväčší plochu, ktorá reaguje na klik, o 5 px, aby sa malé body dali trafiť aj prstom. V režime obcí sa vybraný okres nepresúva navrch (`obnov()` vo `VrstvaOkresov`), inak by jeho priehľadná výplň prekryla body obcí v tom okrese.
+
 **Stav v adrese.** Výber sa zapisuje za znak `#`, napr. `index.html#typ=VLDD&obec=<kód obce>`, `#okres=<kód okresu>`, `#vrstva=okolie` (okresy podľa U8) alebo `#vrstva=obce` (mapa obcí podľa vzdialenosti). Takýto odkaz sa dá poslať a tlačidlo Späť v prehliadači funguje (udalosť `hashchange` v `app.js`).
 
 **Prečo nikde nie je `innerHTML`.** Názvy a adresy z registra sa do stránky vkladajú iba ako text, cez funkciu `el()` (vlastnosť `textContent`). Aj keby register obsahoval kód HTML, zobrazí sa ako obyčajný text. Umelé dáta preto zámerne obsahujú názov `<img src=x onerror=alert(1)>`. `scripts/check_repo.py` zakázané vzory v JS kontroluje.
@@ -64,7 +66,7 @@ Na počítači:
 - [ ] Prepínač „Lekári pre dospelých / Pediatri“: zmenia sa farby aj legenda?
 - [ ] Klik na okres: panel s ukazovateľmi U1, U6, U2, U5, U8 a U7. Ikona ⓘ vedie do metodiky. Pri mestských okresoch Bratislavy a Košíc je navyše poznámka.
 - [ ] Prepínač „Mapa: Okresy – okolie 10 km“: farby podľa U8. Porovnaj Košice III a Bratislavu I s režimom „Okresy“.
-- [ ] Prepínač „Mapa: Obce podľa vzdialenosti“: každá obec je bod, tmavší bod = ďalej od ambulancie. Klik na bod vyberie obec.
+- [ ] Prepínač „Mapa: Obce podľa vzdialenosti“: každá obec je bod, tmavší bod = bližšie k ambulancii. Klik na bod vyberie obec, a to aj vo vybranom okrese.
 - [ ] Vyhľadanie obce (skús aj bez diakritiky): okruhy 10 a 20 km, body ambulancií, panel obce.
 - [ ] Karty ambulancií: „Zobraziť ďalšie“, „Kontakt a ordinačné hodiny“, „Nahlásiť chybu v zázname“.
 - [ ] Klik na bod na mape zvýrazní kartu a klik na kartu zvýrazní bod.
@@ -246,7 +248,7 @@ Pri prvom snapshote sa nič neporovnáva (INFO).
 
 ### Legenda mapy
 
-Hranice farieb sú pevne dané v `config.toml`, sekcia `[legenda]`: VLD 4, 5, 6 a 7, pediatri 8, 10, 12 a 14. Vzniká tak 5 tried, napr. pri VLD: menej ako 4, 4–5, 5–6, 6–7 a 7 a viac. Tmavšia farba znamená menej ambulancií. Pri pevných hraniciach znamená tá istá farba každý mesiac to isté.
+Hranice farieb sú pevne dané v `config.toml`, sekcia `[legenda]`: VLD 4, 5, 6 a 7, pediatri 8, 10, 12 a 14. Vzniká tak 5 tried, napr. pri VLD: menej ako 4, 4–5, 5–6, 6–7 a 7 a viac. Tmavšia farba znamená viac ambulancií, bledšia menej. Pri pevných hraniciach znamená tá istá farba každý mesiac to isté.
 
 ### Typické pasce
 

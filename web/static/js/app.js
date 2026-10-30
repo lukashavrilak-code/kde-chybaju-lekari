@@ -74,7 +74,7 @@ async function obnovVrstvy() {
       `Vzdušná vzdialenosť zo stredu obce k najbližšej ambulancii v km: ${nazovTypu}`,
       meta.legenda.vzdialenost_km,
       obce.map((obec) => obec[`${prefix}_km`]),
-      { paleta: PALETA_VZDIALENOST, format: formatCislo, poznamka: "Tmavšia farba = ďalej od ambulancie. V zátvorke je počet obcí." },
+      { paleta: PALETA_VZDIALENOST, format: formatCislo, poznamka: "Tmavšia farba = bližšie k ambulancii. V zátvorke je počet obcí." },
     );
     return;
   }
