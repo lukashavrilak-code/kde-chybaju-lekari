@@ -80,6 +80,11 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
     assert "Denný stacionár Pokusy" not in names
     assert "Nová verzia záznamu" in names and "Stará verzia záznamu" not in names
 
+    not_found = (SITE / "404.html").read_text(encoding="utf-8")
+    assert 'href="https://example.org/lekari/static/css/style.css"' in not_found
+    assert 'href="https://example.org/lekari/rebricky.html"' in not_found
+    assert 'href="static/css/style.css"' in (SITE / "index.html").read_text(encoding="utf-8")
+
     for page in SITE.glob("*.html"):
         html = page.read_text(encoding="utf-8")
         assert "<img src=x" not in html

@@ -31,7 +31,7 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 | Dáta | CSV na stiahnutie a popis stĺpcov | `data.html` | žiadny | `downloads/*.csv` |
 | Metodika | text z `docs/metodika.md` a tabuľka „Aktuálny stav dát“ | `metodika.html` | žiadny | – |
 | Súkromie | text z `docs/sukromie.md`, prevádzkovateľ a kontakt | `sukromie.html` | žiadny | – |
-| 404 | stránka pre neexistujúcu adresu | `404.html` | žiadny | – |
+| 404 | stránka pre neexistujúcu adresu; odkazy sú absolútne podľa `[projekt] web_url`, aby fungovali aj na vnorenej adrese (CSP nepovoľuje `<base>`) | `404.html` | žiadny | – |
 
 Šablóny sú vo `web/templates/`. Všetky dedia z `base.html`: hlavička, menu, upozornenie „neoficiálna analýza“, pätička so zdrojmi a verziou pipeline. HTML z nich vyrába `pipeline/site.py` pri príkaze `export`. Kým v `config.toml` chýba prevádzkovateľ, stránka Súkromie ukazuje text „[DOPLŇ MENO PREVÁDZKOVATEĽA]“. Pred zverejnením je to tak v poriadku.
 

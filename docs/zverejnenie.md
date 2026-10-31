@@ -24,7 +24,7 @@ Odporúčanie: GitHub Pages. Ostatné možnosti sú záloha, ak by bol problém 
 
 - **E-mail autora commitov** je projektový e-mail (rozhodnutie autora z 28. 10. 2026). Nesmie obsahovať meno.
 - **`LICENSE`:** riadok `[DOPLŇ MENO AUTORA]` nahradiť menom autora.
-- **`config.toml [projekt]`:** `prevadzkovatel`, `web_url`, `repozitar_url`.
+- **`config.toml [projekt]`:** `prevadzkovatel`, `web_url`, `repozitar_url`. Stránka 404 z `web_url` skladá absolútne odkazy, aby fungovala aj na vnorenej adrese (napr. `…/lekari/a/b`). Bez `web_url` `pipeline deploy` web nenasadí.
 - **Projektový e-mail** bude viditeľný na webe (Súkromie, Metodika).
 - `pipeline deploy` odmietne nasadiť web, ak niektorá stránka obsahuje `[DOPLŇ …]`.
 

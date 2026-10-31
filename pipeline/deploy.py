@@ -27,6 +27,8 @@ def deploy_problems(cfg, site):
     projekt = cfg["projekt"]
     if not projekt["prevadzkovatel"].strip() or not projekt["kontakt_email"].strip():
         problems.append("chýba prevádzkovateľ (config.toml) alebo kontaktný e-mail (config.local.toml)")
+    if not projekt["web_url"].strip():
+        problems.append("chýba [projekt] web_url v config.toml (stránka 404 ho potrebuje pre odkazy na vnorených adresách)")
     if not all(p["url"] for p in cfg["web"]["poistovne"]):
         problems.append("v config.toml chýbajú odkazy na vyhľadávanie lekárov poisťovní")
     for page in site.glob("*.html"):

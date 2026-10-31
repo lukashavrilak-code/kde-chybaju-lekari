@@ -106,6 +106,7 @@ def apply(cfg):
     cfg["zverejnit"]["VLDD"] = True
     cfg["projekt"]["prevadzkovatel"] = "Testovací prevádzkovateľ"
     cfg["projekt"]["kontakt_email"] = "test@example.org"
+    cfg["projekt"]["web_url"] = "https://example.org/lekari/"
     for insurer in cfg["web"]["poistovne"]:
         insurer["url"] = "https://example.org/vyhladavanie-lekarov"
     cfg["web"]["mestske_okresy"] = ["902"]
