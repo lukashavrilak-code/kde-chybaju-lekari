@@ -33,7 +33,7 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 | Súkromie | text z `docs/sukromie.md`, prevádzkovateľ a kontakt | `sukromie.html` | žiadny | – |
 | 404 | stránka pre neexistujúcu adresu; odkazy sú absolútne podľa `[projekt] web_url`, aby fungovali aj na vnorenej adrese (CSP nepovoľuje `<base>`) | `404.html` | žiadny | – |
 
-Šablóny sú vo `web/templates/`. Všetky dedia z `base.html`: hlavička, menu, upozornenie „neoficiálna analýza“, pätička so zdrojmi a verziou pipeline. HTML z nich vyrába `pipeline/site.py` pri príkaze `export`. Kým v `config.toml` chýba prevádzkovateľ, stránka Súkromie ukazuje text „[DOPLŇ MENO PREVÁDZKOVATEĽA]“. Pred zverejnením je to tak v poriadku.
+Šablóny sú vo `web/templates/`. Všetky dedia z `base.html`: hlavička, menu, upozornenie „neoficiálna analýza“, pätička so zdrojmi a verziou pipeline. HTML z nich vyrába `pipeline/site.py` pri príkaze `export`. Prevádzkovateľ na stránke Súkromie je z `config.toml` (`[projekt] prevadzkovatel`), e-mail z `config.local.toml`.
 
 ### JavaScript mapy (`web/static/js/`)
 

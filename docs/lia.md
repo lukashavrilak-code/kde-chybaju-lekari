@@ -19,7 +19,7 @@ Informovať verejnosť o geografickej dostupnosti ambulancií všeobecných lek�
 | Povaha údajov | profesijné údaje z verejného registra, nie citlivé údaje |
 | Očakávania dotknutých osôb | údaje sú verejne dostupné v štátnom registri, lekár ako poskytovateľ verejnej služby môže očakávať ich zobrazenie |
 | Dopad | žiadne profilovanie, hodnotenie ani komentáre, nič navyše oproti registru |
-| Záruky | minimalizácia, skrytie záznamu na žiadosť do 5 pracovných dní, transparentná metodika, informácie podľa čl. 14 na webe, žiadne cookies ani sledovanie návštevníkov |
+| Záruky | minimalizácia, skrytie záznamu na žiadosť bez zbytočného odkladu, transparentná metodika, informácie podľa čl. 14 na webe, žiadne cookies ani sledovanie návštevníkov |
 
 ## 4. Záver
 
