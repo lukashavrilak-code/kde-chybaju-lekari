@@ -14,7 +14,7 @@ Projekt: neoficiálna mapa dostupnosti lekárov prvého kontaktu na Slovensku.
 - Zobrazovať iba názov poskytovateľa, adresu a odbornosť z registra. Netvrdiť nič, čo register neobsahuje.
 - Nescrapovať weby poisťovní ani iné weby. Kontakty riešiť iba odkazom. Výnimka: zo stránky ÚDZS s kódmi poskytovateľov sa raz mesačne načíta iba zoznam odkazov a vyberie sa odkaz VyberKpWeb_*.xlsx.
 - STATdata sa nesmie sťahovať automaticky (podmienky ŠÚ SR), pipeline iba číta ručne exportované súbory.
-- Nominatim: najviac 1 požiadavka za sekundu, cache, tú istú adresu nikdy dvakrát. Hromadné geokódovanie, vytvorenie verejného repozitára a nasadenie robiť iba po výslovnom súhlase autora.
+- Nominatim: pri mesačných (pravidelných) behoch najviac 4 požiadavky za minútu (`interval_s = 15`, podmienky OSM), nikdy viac ako 1 za sekundu, cache, tú istú adresu nikdy dvakrát. Hromadné geokódovanie, vytvorenie verejného repozitára a nasadenie robiť iba po výslovnom súhlase autora.
 - Na webe žiadne `innerHTML` a pod. (kontroluje `scripts/check_repo.py`), žiadne inline skripty ani štýly (CSP v `pipeline/site.py`).
 - Neoverené fakty označovať „OVERIŤ“ a zapisovať do `docs/overenia.md`.
 

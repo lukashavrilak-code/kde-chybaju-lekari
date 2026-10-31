@@ -99,7 +99,7 @@ pomer_max = 1.6
 
 [nominatim]
 url = "https://nominatim.openstreetmap.org/search"
-interval_s = 1.1
+interval_s = 15
 timeout_s = 30
 pokusy = 4
 cakanie_po_chybe_s = 30
