@@ -117,7 +117,7 @@ Register ÚDZS hovorí, koľko je ambulancií, ale nie, koľko lekárov v nich p
 
 Kontrola: súčet úväzkov za kraje sa musí rovnať údaju za Slovensko a údaj za Slovensko overenej hodnote (VLD 1 743,07, VLDD 812,72).
 
-Porovnanie s NCZI: tabuľka T2.9 uvádza úväzky na 100 000 obyvateľov rovnakých vekových skupín. Pri VLD sa naše hodnoty (×10) líšia najviac o 0,4 %. Pri pediatroch sú o 0,1 až 0,8 % vyššie, pravdepodobne preto, že NCZI delí iným rokom obyvateľstva (OVERIŤ, O20).
+Porovnanie s NCZI: tabuľka T2.9 uvádza úväzky na 100 000 obyvateľov rovnakých vekových skupín. Pri VLD sa naše hodnoty (×10) líšia najviac o 0,4 %. Pri pediatroch sú o 0,1 až 0,8 % vyššie. Za Slovensko NCZI pri pediatroch delí asi 1 025 875 deťmi. To je menej ako stredný stav 2024 (1 028 343) a viac ako stredný stav 2025 (1 020 767), ktorý používame my. Pravdepodobne ide o stav k 31. 12. 2024 (OVERIŤ, O20).
 
 Obmedzenia: NCZI uvádza úväzky iba za Slovensko a kraje, za okresy nie. Údaje NCZI sú za rok 2024, obyvatelia za rok 2025 a register k inému dátumu. Útvar v NCZI nemusí zodpovedať jednému kódu v registri (O8), preto úväzky nedelíme počtom ambulancií v registri. Úväzok nehovorí o tom, či lekár prijíma nových pacientov.
 
