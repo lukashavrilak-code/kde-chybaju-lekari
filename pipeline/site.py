@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import re
 import shutil
 
 import markdown
@@ -12,6 +13,7 @@ CSP = (
     "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; "
     "connect-src 'self'; base-uri 'none'; form-action 'none'"
 )
+EMPTY_HEADER = re.compile(r"<table>\s*<thead>\s*<tr>\s*(?:<th></th>\s*)+</tr>\s*</thead>")
 PAGES = ["index.html", "rebricky.html", "data.html", "metodika.html", "sukromie.html", "404.html"]
 LEAFLET = ROOT / "web" / "static" / "vendor" / "leaflet-1.9.4"
 
@@ -42,7 +44,10 @@ def verified_leaflet_hashes():
 
 def render_markdown(name):
     text = (ROOT / "docs" / name).read_text(encoding="utf-8")
-    return markdown.markdown(text, extensions=["tables", "sane_lists"], output_format="html")
+    html = markdown.markdown(text, extensions=["tables", "sane_lists"], output_format="html")
+    html = html.replace(' style="text-align: right;"', ' class="cislo"')
+    html = EMPTY_HEADER.sub('<div class="tabulka-obal"><table class="tabulka parametre">', html)
+    return html.replace("<table>", '<div class="tabulka-obal"><table class="tabulka">').replace("</table>", "</table></div>")
 
 
 def build_site(cfg, context, site_dir):

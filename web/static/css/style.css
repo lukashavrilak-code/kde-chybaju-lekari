@@ -175,7 +175,8 @@ h3 { font-size: 1.05rem; }
 .tabulka-obal { overflow-x: auto; }
 .znacka { padding: 0 2px; font-weight: 600; text-decoration: none; }
 
-.text { max-width: 760px; }
+.text { max-width: 760px; overflow-wrap: break-word; }
+.tabulka.parametre td:first-child { width: 11rem; font-weight: 600; }
 .poznamka { font-size: 0.9rem; color: var(--text-2); }
 .noscript { padding: 12px; background: var(--povrch); border: 1px solid var(--okraj); }
 
@@ -196,4 +197,9 @@ h3 { font-size: 1.05rem; }
   .panel { max-height: none; }
   .tabulka { font-size: 0.85rem; }
   .tabulka th, .tabulka td { padding: 5px 4px; }
+}
+
+@media (max-width: 520px) {
+  .tabulka.parametre, .tabulka.parametre tbody, .tabulka.parametre tr, .tabulka.parametre td { display: block; width: auto; }
+  .tabulka.parametre td:first-child { padding-bottom: 0; border-bottom: none; }
 }

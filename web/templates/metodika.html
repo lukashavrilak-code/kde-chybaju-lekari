@@ -6,6 +6,7 @@
 <p id="kontakt-oprava"><strong>Projektový e-mail na opravu alebo odstránenie záznamu:</strong> {% if projekt.kontakt_email %}<a href="mailto:{{ projekt.kontakt_email }}">{{ projekt.kontakt_email }}</a>{% else %}[DOPLŇ PROJEKTOVÝ E-MAIL]{% endif %}</p>
 <h2 id="aktualne">Aktuálny stav dát</h2>
 <p>Register ÚDZS k {{ stav_registra_text }}, obyvatelia: {{ popis_obyvatelstva }}, verzia pipeline {{ verzia }}.</p>
+<div class="tabulka-obal">
 <table class="tabulka">
   <thead><tr><th scope="col">Údaj</th><th scope="col" class="cislo">Hodnota</th></tr></thead>
   <tbody>
@@ -23,8 +24,10 @@
     <tr><td>Kontroly kvality: OK / upozornenia / chyby</td><td class="cislo">{{ validacia.OK }} / {{ validacia.WARN }} / {{ validacia.FAIL }}</td></tr>
   </tbody>
 </table>
+</div>
 {% if nczi %}
 <h3>Porovnanie s tabuľkami NCZI</h3>
+<div class="tabulka-obal">
 <table class="tabulka">
   <thead><tr><th scope="col">Typ</th><th scope="col">Kraj</th><th scope="col" class="cislo">Register</th><th scope="col" class="cislo">NCZI {{ nczi[0].rok }} (počet útvarov)</th><th scope="col" class="cislo">Pomer</th><th scope="col" class="cislo">NCZI {{ nczi[0].rok }} (úväzky lekárov)</th></tr></thead>
   <tbody>
@@ -33,6 +36,7 @@
 {% endfor %}
   </tbody>
 </table>
+</div>
 <p class="poznamka">NCZI uvádza stav k 31. 12. {{ nczi[0].rok }}, register je k {{ stav_registra_text }}. Kraj ambulancie určujeme podľa adresy v registri. Porovnanie je iba kontrola a nikdy neblokuje zverejnenie. Rozdiel vysvetľujeme v časti <a href="#nczi">Porovnanie s NCZI</a>.</p>
 {% endif %}
 </article>

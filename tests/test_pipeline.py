@@ -85,8 +85,16 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
     assert 'href="https://example.org/lekari/rebricky.html"' in not_found
     assert 'href="static/css/style.css"' in (SITE / "index.html").read_text(encoding="utf-8")
 
+    metodika = (SITE / "metodika.html").read_text(encoding="utf-8")
+    assert all(f'id="u{i}"' in metodika for i in range(1, 10))
+    for name in ("metodika.html", "sukromie.html"):
+        html = (SITE / name).read_text(encoding="utf-8")
+        assert html.count("<table") == html.count('class="tabulka-obal"')
+        assert 'class="tabulka parametre"' in html
+
     for page in SITE.glob("*.html"):
         html = page.read_text(encoding="utf-8")
+        assert 'style="' not in html
         assert "<img src=x" not in html
         assert "Content-Security-Policy" in html
 
