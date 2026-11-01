@@ -16,7 +16,7 @@
   <a class="nazov-webu" href="{{ koren }}index.html">{{ projekt.nazov }}</a>
   <nav aria-label="Hlavné menu">
     <ul class="menu">
-{% for subor, nazov in [("index.html", "Mapa"), ("rebricky.html", "Rebríčky"), ("data.html", "Dáta"), ("metodika.html", "Metodika"), ("sukromie.html", "Súkromie a kontakt")] %}
+{% for subor, nazov in [("index.html", "Mapa"), ("rebricky.html", "Rebríčky"), ("data.html", "Dáta"), ("metodika.html", "Metodika")] %}
       <li><a href="{{ koren }}{{ subor }}"{% if stranka == subor %} aria-current="page"{% endif %}>{{ nazov }}</a></li>
 {% endfor %}
     </ul>
