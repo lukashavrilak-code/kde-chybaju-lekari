@@ -4,7 +4,7 @@ Všetky príkazy spúšťaj v priečinku projektu s aktivovaným prostredím (`.
 
 ## Prvé nastavenie
 
-1. V `config.toml` doplň `[projekt]` prevádzkovateľa a URL repozitára. Možnosti hostingu sú v [zverejnenie.md](zverejnenie.md). Odkazy poisťovní (`[[web.poistovne]]`) sú vyplnené (O9).
+1. V `config.toml` skontroluj `[projekt]` (prevádzkovateľ, adresa webu a repozitára). Postup zverejnenia je v [zverejnenie.md](zverejnenie.md). Odkazy poisťovní (`[[web.poistovne]]`) sú vyplnené (O9).
 2. Vytvor `config.local.toml` (nie je v Gite) s projektovým e-mailom. Používa ho Nominatim aj web:
    ```toml
    [projekt]
@@ -75,11 +75,11 @@ Obnova: skopíruj priečinky zo zálohy späť do projektu (rovnaké cesty).
 Postup pre verejnosť je v metodike (časť „Oprava alebo odstránenie záznamu“). Žiadosti prichádzajú na projektový e-mail z `config.local.toml`.
 
 1. Do 2 pracovných dní potvrď prijatie. Žiadosť zapíš do `data/local/ziadosti_log.csv` (dátum, typ, čo sa urobilo, dátum vybavenia).
-2. Nájdi záznam: otvor `data/local/lekari.sqlite` (napr. v DB Browser for SQLite, keď pipeline nebeží) a vyhľadaj ho v pohľade `v_ambulancia` podľa názvu a adresy.
+2. Nájdi záznam: otvor `data/local/lekari.sqlite` (napr. v DB Browser for SQLite, keď pipeline nebeží) a vyhľadaj ho v pohľade `v_ambulancia` podľa adresy. Na jednej adrese môže byť viac kódov, skry iba ten, ktorého sa žiadosť týka.
 3. **Skrytie:** pridaj `pzs_kod` do `data/local/blocklist.csv` (stĺpce `pzs_kod,datum,typ_ziadosti`). **Chybná poloha:** pridaj riadok do `data/manual/geocode_overrides.csv`.
 4. Spusti `python -m pipeline clean`, `geocode`, `compute` a `export`, skontroluj web a nasaď (`deploy`). Netreba nič sťahovať.
 5. Odpovedz žiadateľovi do 5 pracovných dní. Ak je chyba v samotnom registri, uveď, že opravu treba žiadať aj u ÚDZS.
 
 ## Uchovávanie
 
-Snapshoty registra v `data/snapshots/udzs/` sú archív (mimo Gitu). Raz za štvrťrok zmaž snapshoty staršie ako 12 mesiacov aj s ich `.sha256`. V SQLite zmaž riadky tabuľky `ambulancia` pre staré snapshoty. Agregovaná história v `data/history/` (vrátane hashov snapshotov) ostáva.
+Snapshoty registra v `data/snapshots/udzs/` sú archív (mimo Gitu). Raz za štvrťrok zmaž snapshoty staršie ako 12 mesiacov aj s ich `.sha256`, **aj v cieli zálohy**, lebo `zaloha` v cieli nič nemaže a na webe sľubujeme najviac 12 mesiacov. V SQLite zmaž riadky tabuľky `ambulancia` pre staré snapshoty. Agregovaná história v `data/history/` (vrátane hashov snapshotov) ostáva.

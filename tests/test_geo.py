@@ -69,28 +69,28 @@ def test_locator_finds_point_and_rejects_point_outside():
 
 
 def test_clean_street_and_number_variants():
-    assert clean_street("ul. Daniela Dlabača 770/23", PREFIXES) == "Daniela Dlabača 770/23"
+    assert clean_street("ul. Jána Testovského 770/23", PREFIXES) == "Jána Testovského 770/23"
     assert clean_street("ul.Hlavná 5", PREFIXES) == "Hlavná 5"
-    assert clean_street("Dolná č. 49/21", PREFIXES) == "Dolná 49/21"
-    assert clean_street("ZS Oravský Podzámok 34", PREFIXES) == "Oravský Podzámok 34"
+    assert clean_street("Vzorová č. 49/21", PREFIXES) == "Vzorová 49/21"
+    assert clean_street("ZS Horná Testovka 34", PREFIXES) == "Horná Testovka 34"
     assert clean_street("ZSNP 2", PREFIXES) == "ZSNP 2"
-    assert clean_street("Ulica mieru 1390", PREFIXES) == "Ulica mieru 1390"
-    assert swap_number("Levočská 59/1808") == "Levočská 1808/59"
-    assert swap_number("Daxnerova 906/III") == "Daxnerova 906/III"
+    assert clean_street("Ulica pokusov 1390", PREFIXES) == "Ulica pokusov 1390"
+    assert swap_number("Pokusná 59/1808") == "Pokusná 1808/59"
+    assert swap_number("Vzorkova 906/III") == "Vzorkova 906/III"
 
 
 def test_village_query_only_for_addresses_without_street():
     assert village_query("Bzenov 37", "Bzenov", "08241") == {"q": "37, Bzenov, 08241"}
     assert village_query("37", "Bzenov", "") == {"q": "37, Bzenov"}
-    assert village_query("Oravský Podzámok 34", "Oravský Podzámok", "02741") == {"q": "34, Oravský Podzámok, 02741"}
+    assert village_query("Horná Testovka 34", "Horná Testovka", "90101") == {"q": "34, Horná Testovka, 90101"}
     assert village_query("Hlavná 1", "Bzenov", "08241") is None
 
 
 def test_street_variants_skip_original_and_duplicates():
     variants = street_variants("Bzenov 37", "Bzenov", "08241", PREFIXES)
     assert variants == [{"q": "37, Bzenov, 08241"}]
-    variants = street_variants("ul. Levočská 59/1808", "Poprad", "05801", PREFIXES)
-    assert [v["street"] for v in variants] == ["Levočská 59/1808", "Levočská 1808/59"]
+    variants = street_variants("ul. Pokusná 59/1808", "Poprad", "05801", PREFIXES)
+    assert [v["street"] for v in variants] == ["Pokusná 59/1808", "Pokusná 1808/59"]
 
 
 class FakeNominatim:
