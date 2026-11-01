@@ -14,9 +14,10 @@ from .site import build_site
 
 TYPE_NAMES = {"VLD": "Všeobecný lekár pre dospelých", "VLDD": "Pediater prvého kontaktu"}
 DENOMINATOR_NAMES = {"VLD": "dospelých (18+)", "VLDD": "detí (0 – 17)"}
-AMBULANCE_KEYS = {"nazov", "typ", "adresa", "lat", "lon", "presnost"}
+AMBULANCE_KEYS = {"typ", "adresa", "lat", "lon", "presnost", "pocet"}
 ALLOWED_EXTENSIONS = {".html", ".css", ".js", ".json", ".geojson", ".csv", ".png", ".svg", ".txt"}
 SK_BOUNDS = {"lat": (47.7, 49.7), "lon": (16.8, 22.6)}
+MIN_NAME_LENGTH = 8
 FIRST_LOAD = ["index.html", "static/css/style.css", "data/meta.json", "data/okresy.geojson"]
 OKRES_CSV = ["okres_kod", "okres", "kraj", "typ", "pocet_ambulancii", "pocet_pracovisk", "na_10k", "menovatel", "poradie",
              *FAR_COLUMNS, "na_10k_okolie", "poradie_okolie", "stav_registra", "stav_obyvatelstva", "verzia_pipeline"]
@@ -107,16 +108,38 @@ def export_obce(obce, indicators, types, meta):
     return {**meta, "obce": items}
 
 
-def export_ambulancie(amb, types, meta):
+def street_without_name(ulica, nazov):
+    return (ulica or "").replace(nazov, "").strip(" ,;-")
+
+
+def export_ambulancie(amb, types, meta, with_names=False):
     subset = amb[amb["typ"].isin(types)].copy()
-    subset["adresa"] = [format_address(u, p, o) for u, p, o in zip(subset["ulica"], subset["psc"], subset["obec_text"])]
+    streets = subset["ulica"] if with_names else [street_without_name(u, n) for u, n in zip(subset["ulica"], subset["nazov"])]
+    subset["adresa"] = [format_address(u, p, o) for u, p, o in zip(streets, subset["psc"], subset["obec_text"])]
     subset = subset.sort_values(["typ", "obec_text", "adresa", "nazov"])
-    items = [
-        {"nazov": r.nazov, "typ": r.typ, "adresa": r.adresa, "lat": round(r.lat, 5), "lon": round(r.lon, 5),
-         "presnost": r.presnost}
-        for r in subset.itertuples()
-    ]
+    keys = ["typ", "adresa_kluc", "nazov"] if with_names else ["typ", "adresa_kluc"]
+    groups = subset.groupby(keys, sort=False).agg(
+        adresa=("adresa", "first"), lat=("lat", "first"), lon=("lon", "first"), presnost=("presnost", "first"), pocet=("adresa", "size"),
+    ).reset_index()
+    items = []
+    for r in groups.itertuples():
+        item = {"typ": r.typ, "adresa": r.adresa, "lat": round(r.lat, 5), "lon": round(r.lon, 5), "presnost": r.presnost,
+                "pocet": int(r.pocet)}
+        if with_names:
+            item["nazov"] = r.nazov
+        items.append(item)
     return {**meta, "atribucia": "Údaje: ÚDZS. Poloha: © OpenStreetMap contributors, ODbL.", "ambulancie": items}
+
+
+def names_in_site(names, site):
+    long_names = [name for name in names if len(name) >= MIN_NAME_LENGTH]
+    found = []
+    for path in sorted(site.rglob("*")):
+        if path.is_file() and path.suffix.lower() != ".png" and "vendor" not in path.parts:
+            text = path.read_text(encoding="utf-8-sig", errors="ignore")
+            if any(name in text for name in long_names):
+                found.append(path.relative_to(site).as_posix())
+    return found
 
 
 def csv_rows(okresy, obce, okres_ind, obec_ind, types, meta):
@@ -299,7 +322,8 @@ def export(cfg, con, snapshot):
 
     write_json(data_dir / "okresy.geojson", export_okresy(cfg, okresy, okres_ind, types, base))
     write_json(data_dir / "obce.json", export_obce(obce, obec_ind, types, base))
-    ambulancie = export_ambulancie(amb, types, base)
+    with_names = bool(cfg["zverejnit"].get("nazvy"))
+    ambulancie = export_ambulancie(amb, types, base, with_names)
     write_json(data_dir / "ambulancie.json", ambulancie)
 
     okres_rows, obec_rows = csv_rows(okresy, obce, okres_ind, obec_ind, types, {**base, "stav_obyvatelstva": stav_obyvatelstva})
@@ -314,8 +338,12 @@ def export(cfg, con, snapshot):
     for name, (rows, columns) in csv_files.items():
         write_csv_rows(downloads / name, rows, columns, bom=True)
 
-    keys_ok = all(set(item) == AMBULANCE_KEYS for item in ambulancie["ambulancie"])
-    checks.check("V6.1", keys_ok, "ambulancie.json obsahuje iba povolené kľúče", ", ".join(sorted(AMBULANCE_KEYS)))
+    allowed_keys = AMBULANCE_KEYS | {"nazov"} if with_names else AMBULANCE_KEYS
+    keys_ok = all(set(item) == allowed_keys for item in ambulancie["ambulancie"])
+    checks.check("V6.1", keys_ok, "ambulancie.json obsahuje iba povolené kľúče", ", ".join(sorted(allowed_keys)))
+    total = int(amb["typ"].isin(types).sum())
+    exported = sum(item["pocet"] for item in ambulancie["ambulancie"])
+    checks.check("V6.8", exported == total, "súčet počtov v ambulancie.json sa rovná počtu ambulancií", f"{exported} / {total}")
     coords_ok = all(in_slovakia(a["lat"], a["lon"]) for a in ambulancie["ambulancie"])
     checks.check("V6.3", coords_ok, "všetky súradnice ambulancií ležia v rozsahu SR")
     for path in sorted(data_dir.iterdir()):
@@ -379,6 +407,7 @@ def export(cfg, con, snapshot):
         "max_zoznam_km": cfg["vypocty"]["max_zoznam_km"],
         "poistovne": [p for p in cfg["web"]["poistovne"] if p["url"]],
         "kontakt_email": cfg["projekt"]["kontakt_email"],
+        "nazvy": with_names,
         "zastarane_po_dnoch": cfg["web"]["zastarane_po_dnoch"],
         "tile_url": cfg["web"]["tile_url"],
         "zdroje": sources(cfg, con, snapshot),
@@ -400,4 +429,10 @@ def export(cfg, con, snapshot):
     first += sum(file_kb(p) for p in (site / "static" / "js").glob("*.js"))
     first += sum(file_kb(p) for p in (site / "static" / "vendor").rglob("*") if p.suffix in (".js", ".css"))
     checks.check("V6.2", first <= limits["prve_nacitanie"], f"prvé načítanie bez dlaždíc v limite {limits['prve_nacitanie']} KB", f"{first:.0f} KB")
+    if not with_names:
+        leaks = names_in_site(amb["nazov"].dropna().unique(), site)
+        checks.check("V6.7", not leaks, "web neobsahuje názvy poskytovateľov", f"{len(leaks)} súborov", detail=", ".join(leaks))
+    summary = validation_summary(con, sid)
+    build_site(cfg, {**context, "validacia": summary}, site)
+    write_json(data_dir / "meta.json", {**meta, "validacia": summary}, indent=2)
     checks.done()

@@ -18,13 +18,30 @@ export function farbaHodnoty(hodnota, hranice, paleta = PALETA) {
 }
 
 export function vytvorMapu(idKontajnera, meta) {
-  const mapa = L.map(idKontajnera, { minZoom: 6, maxZoom: 17, zoomSnap: 0.5, renderer: L.canvas({ tolerance: 5 }) });
-  mapa.fitBounds(SLOVENSKO);
+  const mapa = L.map(idKontajnera, { minZoom: 6, maxZoom: 17, zoomSnap: 0.25, renderer: L.canvas({ tolerance: 5 }) });
+  zobrazSlovensko(mapa);
   L.tileLayer(meta.tile_url, {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
   return mapa;
+}
+
+export function zobrazSlovensko(mapa) {
+  mapa.fitBounds(SLOVENSKO);
+}
+
+export function pridajTlacidloSlovensko(mapa, priKliknuti) {
+  const Tlacidlo = L.Control.extend({
+    options: { position: "topright" },
+    onAdd() {
+      const tlacidlo = el("button", { trieda: "tlacidlo mapa-slovensko", text: "Celé Slovensko", atributy: { type: "button" } });
+      L.DomEvent.disableClickPropagation(tlacidlo);
+      tlacidlo.addEventListener("click", priKliknuti);
+      return tlacidlo;
+    },
+  });
+  new Tlacidlo().addTo(mapa);
 }
 
 export class VrstvaOkresov {
@@ -78,14 +95,6 @@ export class VrstvaOkresov {
       if (layer.feature.properties.kod === vybrany && !lenObrys) layer.bringToFront();
     });
   }
-
-  hranicaOkresu(kod) {
-    let vysledok = null;
-    this.vrstva.eachLayer((layer) => {
-      if (layer.feature.properties.kod === kod) vysledok = layer.getBounds();
-    });
-    return vysledok;
-  }
 }
 
 export class VrstvaObci {
@@ -123,12 +132,11 @@ export class VrstvaOkolia {
   constructor(mapa) {
     this.mapa = mapa;
     this.skupina = L.layerGroup().addTo(mapa);
-    this.body = new Map();
+    this.body = [];
   }
 
   zobraz(obec, ambulancie, polomery, priKliknuti) {
-    this.skupina.clearLayers();
-    this.body.clear();
+    this.vycisti();
     for (const polomer of polomery) {
       L.circle([obec.lat, obec.lon], {
         radius: polomer * 1000,
@@ -139,19 +147,26 @@ export class VrstvaOkolia {
         interactive: false,
       }).addTo(this.skupina);
     }
+    const podlaPolohy = new Map();
     ambulancie.forEach((zaznam, index) => {
-      const bod = L.circleMarker([zaznam.ambulancia.lat, zaznam.ambulancia.lon], {
+      const kluc = `${zaznam.ambulancia.lat},${zaznam.ambulancia.lon}`;
+      if (!podlaPolohy.has(kluc)) podlaPolohy.set(kluc, []);
+      podlaPolohy.get(kluc).push(index);
+    });
+    for (const indexy of podlaPolohy.values()) {
+      const prva = ambulancie[indexy[0]].ambulancia;
+      const bod = L.circleMarker([prva.lat, prva.lon], {
         radius: 6,
         color: "#ffffff",
         weight: 2,
         fillColor: "#0b0b0b",
         fillOpacity: 1,
       });
-      bod.bindTooltip(() => el("div", { text: zaznam.ambulancia.nazov }));
-      bod.on("click", () => priKliknuti(index));
+      bod.bindTooltip(() => el("div", { text: popisBodu(indexy.map((i) => ambulancie[i].ambulancia)) }));
+      bod.on("click", () => priKliknuti(indexy));
       bod.addTo(this.skupina);
-      this.body.set(index, bod);
-    });
+      this.body.push({ bod, indexy });
+    }
     L.circleMarker([obec.lat, obec.lon], {
       radius: 8,
       color: "#0b0b0b",
@@ -164,17 +179,25 @@ export class VrstvaOkolia {
     this.mapa.fitBounds(L.latLng(obec.lat, obec.lon).toBounds(polomery[polomery.length - 1] * 2000));
   }
 
-  zvyrazni(index) {
-    for (const [i, bod] of this.body) {
-      bod.setStyle(i === index ? { radius: 10, fillColor: "#ffffff", color: "#0b0b0b", weight: 3 } : { radius: 6, fillColor: "#0b0b0b", color: "#ffffff", weight: 2 });
-      if (i === index) bod.bringToFront();
+  zvyrazni(vybrane) {
+    for (const { bod, indexy } of this.body) {
+      const aktivny = indexy.some((index) => vybrane.includes(index));
+      bod.setStyle(aktivny ? { radius: 10, fillColor: "#ffffff", color: "#0b0b0b", weight: 3 } : { radius: 6, fillColor: "#0b0b0b", color: "#ffffff", weight: 2 });
+      if (aktivny) bod.bringToFront();
     }
   }
 
   vycisti() {
     this.skupina.clearLayers();
-    this.body.clear();
+    this.body = [];
   }
+}
+
+function popisBodu(ambulancie) {
+  if (ambulancie.length > 1) return `Adries na tomto bode: ${ambulancie.length}`;
+  const [a] = ambulancie;
+  const nazov = a.nazov || a.adresa || "Adresa v registri chýba";
+  return a.pocet > 1 ? `${nazov} (ambulancií: ${a.pocet})` : nazov;
 }
 
 export function vykresliLegendu(kontajner, nadpis, hranice, hodnoty, moznosti = {}) {

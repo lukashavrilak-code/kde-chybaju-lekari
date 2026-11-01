@@ -8,7 +8,7 @@ Stránka **neukazuje**, či ambulancia prijíma nových pacientov, aké má ordi
 
 | Zdroj | Čo z neho používame | Stav k | Licencia |
 |---|---|---|---|
-| ÚDZS – Kódy poskytovateľov zdravotnej starostlivosti (XLSX) | názov poskytovateľa, odbornosť z kódu, adresa ambulancie, platnosť záznamu | mesiac registra (pozri [Aktuálny stav dát](#aktualne)) | licencia nie je uvedená |
+| ÚDZS – Kódy poskytovateľov zdravotnej starostlivosti (XLSX) | odbornosť z kódu, adresa ambulancie, platnosť záznamu, IČO (iba na spočítanie pracovísk). Názvy poskytovateľov na webe nezobrazujeme. | mesiac registra (pozri [Aktuálny stav dát](#aktualne)) | licencia nie je uvedená |
 | Štatistický úrad SR – STATdata, tabuľka om7006rr | počet obyvateľov obcí vo veku 0 – 17 a 18+ (menovateľ) | stredný stav 2025 | CC BY 4.0, „Zdroj: Štatistický úrad SR, CC BY 4.0, www.statistics.sk“ |
 | ÚGKK SR – ZBGIS | hranice obcí a okresov, bod sídla každej obce | súbory z roku 2026 | CC BY 4.0, hranice sú na webe zjednodušené |
 | OpenStreetMap – Nominatim | poloha (súradnice) adries ambulancií | pri geokódovaní | © OpenStreetMap contributors, ODbL |
@@ -141,8 +141,8 @@ Zdroj metódy: Luo W., Wang F. (2003): Measures of spatial accessibility to heal
 | Zdroj | NCZI, výstup S01 2024, tabuľky T2, stĺpec „Počet pracovných miest – Lekári“, riadky „ambulancia_výstup“, odbornosti 008 a 020. Pracovné miesto je súčet úväzkov prepočítaný na plný pracovný čas: dvaja lekári na polovičný úväzok sú jedno pracovné miesto. |
 | Výpočet | **U9 = úväzky lekárov v kraji / menovateľ × 10 000**, zaokrúhlené na dve desatinné miesta. Menovateľ ako pri U2, sčítaný za okresy kraja. Uvádzame aj priemerný úväzok na jeden útvar NCZI (úväzky / počet útvarov, oboje z NCZI). |
 | Kontrola | Súčet krajov sa rovná údaju za Slovensko a údaj za Slovensko overenej hodnote (VLD 1 743,07, VLDD 812,72). |
-| Porovnanie s NCZI | Tabuľka T2.9 uvádza úväzky na 100 000 obyvateľov. Pri VLD sa naše hodnoty (×10) líšia najviac o 0,4 %, pri pediatroch sú o 0,1 až 0,8 % vyššie. Za Slovensko NCZI pri pediatroch delí asi 1 025 875 deťmi. To je menej ako stredný stav 2024 (1 028 343) a viac ako stredný stav 2025 (1 020 767), ktorý používame my. Pravdepodobne ide o stav k 31. 12. 2024 (OVERIŤ, O20). |
-| Obmedzenia | NCZI uvádza úväzky iba za Slovensko a kraje. Údaje NCZI sú za rok 2024, obyvatelia za rok 2025. Útvar NCZI nemusí zodpovedať jednému kódu v registri (O8), preto úväzky nedelíme počtom ambulancií v registri. Úväzok nehovorí o tom, či lekár prijíma nových pacientov. |
+| Porovnanie s NCZI | Tabuľka T2.9 uvádza úväzky na 100 000 obyvateľov. Pri VLD sa naše hodnoty (×10) líšia najviac o 0,4 %, pri pediatroch sú o 0,1 až 0,8 % vyššie. Za Slovensko NCZI pri pediatroch delí asi 1 025 875 deťmi. To je menej ako stredný stav 2024 (1 028 343) a viac ako stredný stav 2025 (1 020 767), ktorý používame my. Pravdepodobne ide o stav k 31. 12. 2024, tento predpoklad sme zatiaľ neoverili. |
+| Obmedzenia | NCZI uvádza úväzky iba za Slovensko a kraje. Údaje NCZI sú za rok 2024, obyvatelia za rok 2025. Útvar NCZI nemusí zodpovedať jednému kódu v registri, preto úväzky nedelíme počtom ambulancií v registri. Úväzok nehovorí o tom, či lekár prijíma nových pacientov. |
 
 ## Poloha ambulancií
 
@@ -205,7 +205,8 @@ Záznamy kvôli rozdielu nefiltrujeme. Každý platný kód počítame ako jednu
 | Obmedzenie | Čo to znamená pre čitateľa |
 |---|---|
 | Register obsahuje kódy poskytovateľov | kód neznamená, že ambulancia skutočne funguje alebo má zmluvu s poisťovňou |
-| Register neuvádza prijímanie pacientov, ordinačné hodiny, telefón ani počet lekárov | tieto údaje overte u svojej zdravotnej poisťovne. Pri spoločnostiach je uvedený iba názov firmy. |
+| Register neuvádza prijímanie pacientov, ordinačné hodiny, telefón ani počet lekárov | tieto údaje overte u svojej zdravotnej poisťovne |
+| Ambulancie na jednej adrese zobrazujeme spolu | karta uvádza ich počet. Názvy poskytovateľov nezobrazujeme, nájdete ich vo vyhľadávaní lekárov zdravotných poisťovní. |
 | Počet ambulancií nie je kapacita | nehovorí o úväzkoch ani o počte pacientov. Úväzky lekárov poznáme iba za kraje ([U9](#u9)). |
 | Vzdialenosti sú vzdušnou čiarou | skutočná cesta je dlhšia |
 | Zdroje majú rôzne dátumy | register, obyvatelia a NCZI nie sú k rovnakému dňu |
@@ -213,7 +214,7 @@ Záznamy kvôli rozdielu nefiltrujeme. Každý platný kód počítame ako jednu
 
 ## Reprodukovateľnosť
 
-Každý výstup nesie dátum zdrojových dát a verziu výpočtu. Celý postup je v otvorenom zdrojovom kóde a dá sa zopakovať. Surové dáta s menami poskytovateľov sa do repozitára neukladajú. Register si pipeline stiahne z pôvodného zdroja, počty obyvateľov zo STATdata sa podľa podmienok Štatistického úradu SR sťahujú ručne.
+Každý výstup nesie dátum zdrojových dát a verziu výpočtu. Celý postup je v otvorenom zdrojovom kóde a dá sa zopakovať. Surové dáta s menami poskytovateľov sa do repozitára neukladajú a mená sa nedostanú ani na web, čo overuje samostatná kontrola. Register si pipeline stiahne z pôvodného zdroja, počty obyvateľov zo STATdata sa podľa podmienok Štatistického úradu SR sťahujú ručne.
 
 ## História zmien metodiky
 
@@ -225,4 +226,4 @@ Každý výstup nesie dátum zdrojových dát a verziu výpočtu. Celý postup j
 
 ## Oprava alebo odstránenie záznamu
 
-Ak je záznam o vašej ambulancii nesprávny alebo nechcete, aby sa zobrazoval, napíšte na projektový e-mail uvedený nižšie. Uveďte názov a adresu ambulancie tak, ako sú na stránke, a čo treba opraviť alebo skryť. Žiadosť vybavíme bez zbytočného odkladu. Skrytý záznam sa nepoužije nikde, ani v súhrnných počtoch. Ak je chyba priamo v registri ÚDZS, opravu treba žiadať aj u ÚDZS. Viac na stránke [Ochrana súkromia a kontakt](sukromie.html).
+Ak je záznam o vašej ambulancii nesprávny alebo nechcete, aby sa zobrazoval, napíšte na projektový e-mail uvedený nižšie. Uveďte adresu ambulancie tak, ako je na stránke, a čo treba opraviť alebo skryť. Žiadosť vybavíme bez zbytočného odkladu. Skrytý záznam sa nepoužije nikde, ani v súhrnných počtoch. Ak je chyba priamo v registri ÚDZS, opravu treba žiadať aj u ÚDZS. Viac na stránke [Ochrana súkromia a kontakt](sukromie.html).

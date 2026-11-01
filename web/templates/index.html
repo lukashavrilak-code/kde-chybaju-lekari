@@ -19,8 +19,8 @@
   <fieldset class="prepinac">
     <legend>Mapa</legend>
     <label><input type="radio" name="vrstva" value="okresy" checked> Okresy</label>
-    <label><input type="radio" name="vrstva" value="okolie"> Okresy – okolie {{ spadova_oblast_km }} km</label>
-    <label><input type="radio" name="vrstva" value="obce"> Obce podľa vzdialenosti</label>
+    <label><input type="radio" name="vrstva" value="okolie"> <span class="dlhy">Okresy – okolie {{ spadova_oblast_km }} km</span><span class="kratky">Okolie {{ spadova_oblast_km }} km</span></label>
+    <label><input type="radio" name="vrstva" value="obce"> <span class="dlhy">Obce podľa vzdialenosti</span><span class="kratky">Obce</span></label>
   </fieldset>
   <div class="hladanie">
     <label for="hladat">Vyhľadať obec</label>
@@ -41,6 +41,7 @@
     <p>Kliknite na okres alebo vyhľadajte obec. Pre obec ukážeme vzdialenosť k najbližšej ambulancii a zoznam ambulancií v okolí.</p>
   </aside>
 </div>
+<div id="lista" class="spodna-lista" hidden></div>
 <noscript><p class="noscript">Mapa potrebuje JavaScript. Poradie okresov nájdete aj bez neho na stránke <a href="rebricky.html">Rebríčky</a>.</p></noscript>
 {% endblock %}
 {% block scripts %}

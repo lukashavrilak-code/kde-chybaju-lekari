@@ -2,8 +2,8 @@
 nazov = "Kde na Slovensku chýbajú lekári prvého kontaktu?"
 prevadzkovatel = "Lukas Havrilak"
 kontakt_email = ""
-web_url = ""
-repozitar_url = ""
+web_url = "https://lukashavrilak-code.github.io/kde-chybaju-lekari/"
+repozitar_url = "https://github.com/lukashavrilak-code/kde-chybaju-lekari"
 
 [cesty]
 raw = "data/raw"
@@ -48,6 +48,7 @@ pozicia_10 = ["2"]
 [zverejnit]
 VLD = true
 VLDD = true
+nazvy = false
 
 [hranice]
 subor = "data/raw/zbgis/USJ_hranice_0.gpkg"
@@ -165,7 +166,7 @@ polozky = ["data/cache", "data/snapshots", "data/raw/statdata", "data/raw/nczi",
 
 [limity_kb]
 "data/meta.json" = 5
-"data/okresy.geojson" = 250
+"data/okresy.geojson" = 300
 "data/obce.json" = 700
 "data/ambulancie.json" = 700
 prve_nacitanie = 550

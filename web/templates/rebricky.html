@@ -5,11 +5,11 @@
 <table class="tabulka">
   <caption>{{ popis }}</caption>
   <thead>
-    <tr><th scope="col">Poradie</th><th scope="col">Okres</th><th scope="col">Kraj</th><th scope="col" class="cislo">Ambulancie</th>{% if pracoviska %}<th scope="col" class="cislo"><a href="metodika.html#u6">Pracoviská</a></th>{% endif %}<th scope="col" class="cislo">{% if u8 %}<a href="metodika.html#u8">V okolí {{ spadova_oblast_km }} km</a> na 10&nbsp;000 {{ menovatele[typ] }}{% else %}Na 10&nbsp;000 {{ menovatele[typ] }}{% endif %}</th>{% if okolie %}<th scope="col" class="cislo"><a href="metodika.html#u8">V okolí {{ spadova_oblast_km }} km</a></th>{% endif %}</tr>
+    <tr><th scope="col">Poradie</th><th scope="col">Okres</th><th scope="col"{% if not pracoviska %} class="skryt-na-mobile"{% endif %}>Kraj</th><th scope="col" class="cislo">Ambulancie</th>{% if pracoviska %}<th scope="col" class="cislo"><a href="metodika.html#u6">Pracoviská</a></th>{% endif %}<th scope="col" class="cislo">{% if u8 %}<a href="metodika.html#u8">V okolí {{ spadova_oblast_km }} km</a> na 10&nbsp;000 {{ menovatele[typ] }}{% else %}Na 10&nbsp;000 {{ menovatele[typ] }}{% endif %}</th>{% if okolie %}<th scope="col" class="cislo"><a href="metodika.html#u8">V okolí {{ spadova_oblast_km }} km</a></th>{% endif %}</tr>
   </thead>
   <tbody>
 {% for r in riadky %}
-    <tr><td>{{ r.poradie }}.</td><td>{{ r.nazov }}{% if r.mestsky %} <a class="znacka" href="#mestske-okresy" aria-label="mestský okres, pozri vysvetlenie">*</a>{% endif %}</td><td>{{ r.kraj }}</td><td class="cislo">{{ r.pocet|cislo }}</td>{% if pracoviska %}<td class="cislo">{{ r.pracoviska|cislo }}</td>{% endif %}<td class="cislo">{{ r.na_10k|cislo(2) }}</td>{% if okolie %}<td class="cislo">{{ r.okolie|cislo(2) }}</td>{% endif %}</tr>
+    <tr><td>{{ r.poradie }}.</td><td><a href="index.html#typ={{ typ }}&amp;okres={{ r.kod }}">{{ r.nazov }}</a>{% if r.mestsky %} <a class="znacka" href="#mestske-okresy" aria-label="mestský okres, pozri vysvetlenie">*</a>{% endif %}</td><td{% if not pracoviska %} class="skryt-na-mobile"{% endif %}>{{ r.kraj }}</td><td class="cislo">{{ r.pocet|cislo }}</td>{% if pracoviska %}<td class="cislo">{{ r.pracoviska|cislo }}</td>{% endif %}<td class="cislo">{{ r.na_10k|cislo(2) }}</td>{% if okolie %}<td class="cislo">{{ r.okolie|cislo(2) }}</td>{% endif %}</tr>
 {% endfor %}
   </tbody>
 </table>

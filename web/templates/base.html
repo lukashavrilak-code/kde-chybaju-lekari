@@ -24,16 +24,16 @@
 </header>
 <div class="upozornenie" data-upozornenie>
   <strong>Neoficiálna analýza verejných dát, stav k {{ stav_registra_text }}.</strong>
-  Nie je to oficiálna stránka ÚDZS, NCZI, MZ SR ani zdravotných poisťovní. <a href="{{ koren }}metodika.html">Ako sme počítali</a>
+  <span class="iba-sirsie">Nie je to oficiálna stránka ÚDZS, NCZI, MZ SR ani zdravotných poisťovní.</span> <a href="{{ koren }}metodika.html">Ako sme počítali</a>
 </div>
 <div class="zastarane" id="zastarane" hidden>Údaje môžu byť zastarané: register je k {{ stav_registra_text }}.</div>
 <main id="obsah" class="{% block main_class %}obsah{% endblock %}">
 {% block main %}{% endblock %}
 </main>
 <footer class="paticka" data-atribucie>
-  <p>Zdroje: ÚDZS – Kódy poskytovateľov zdravotnej starostlivosti (stav k {{ stav_registra_text }}) · ÚGKK SR – ZBGIS, hranice a geografické názvy obcí (CC BY 4.0, hranice zjednodušené) · mapa a geokódovanie © OpenStreetMap contributors (ODbL).</p>
+  <p>Zdroje: ÚDZS – Kódy poskytovateľov zdravotnej starostlivosti (stav k {{ stav_registra_text }}) · NCZI – výstup S01 za rok {{ rok_nczi }} (kontrola počtov, úväzky lekárov) · ÚGKK SR – ZBGIS, hranice a geografické názvy obcí (CC BY 4.0, hranice zjednodušené) · mapa a geokódovanie © OpenStreetMap contributors (ODbL).</p>
   <p>Počty obyvateľov ({{ popis_obyvatelstva }}) – {{ atribucia_obyvatelia }}</p>
-  <p>Verzia pipeline {{ verzia }} · <a href="{{ koren }}sukromie.html">Ochrana súkromia a kontakt</a>{% if projekt.repozitar_url %} · <a href="{{ projekt.repozitar_url }}">Zdrojový kód</a>{% endif %}</p>
+  <p>Autor: {{ projekt.prevadzkovatel }} · Verzia pipeline {{ verzia }} · <a href="{{ koren }}sukromie.html">Ochrana súkromia a kontakt</a>{% if projekt.repozitar_url %} · <a href="{{ projekt.repozitar_url }}">Zdrojový kód</a>{% endif %}</p>
 </footer>
 {% block scripts %}{% endblock %}
 </body>

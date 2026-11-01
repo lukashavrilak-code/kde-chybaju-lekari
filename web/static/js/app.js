@@ -1,20 +1,27 @@
-import { PALETA_VZDIALENOST, VrstvaObci, VrstvaOkolia, VrstvaOkresov, vykresliLegendu, vytvorMapu } from "./map.js";
+import { SpodnaLista } from "./lista.js";
+import { PALETA_VZDIALENOST, VrstvaObci, VrstvaOkolia, VrstvaOkresov, pridajTlacidloSlovensko, vykresliLegendu, vytvorMapu, zobrazSlovensko } from "./map.js";
 import { vykresliChybu, vykresliObec, vykresliOkres } from "./panel.js";
 import { nastavHladanie } from "./search.js";
-import { bezDiakritiky, formatCislo, haversineKm, nacitajJson } from "./util.js";
+import { bezDiakritiky, el, formatCislo, formatKm, formatNa10k, haversineKm, nacitajJson } from "./util.js";
 
 const panel = document.getElementById("panel");
 const legenda = document.getElementById("legenda");
 const vstup = document.getElementById("hladat");
 const uvodPanela = Array.from(panel.childNodes, (uzol) => uzol.cloneNode(true));
-const stav = { typ: null, vrstva: "okresy" };
+const stav = { typ: null, vrstva: "okresy", priblizene: false };
 let meta = null;
 let okresy = null;
+let mapa = null;
+let lista = null;
 let vrstvaOkresov = null;
 let vrstvaObci = null;
 let vrstvaOkolia = null;
-let zvyrazniKartu = null;
 let indexPromise = null;
+let poslednyBeh = 0;
+
+function jeMobil() {
+  return window.matchMedia("(max-width: 800px)").matches;
+}
 
 function citajHash() {
   const parametre = new URLSearchParams(location.hash.slice(1));
@@ -63,11 +70,26 @@ function synchronizujPrepinac() {
   });
 }
 
-async function obnovVrstvy() {
+function zobrazNacitavanie() {
+  panel.setAttribute("aria-busy", "true");
+  panel.replaceChildren(el("p", { text: "Načítavam údaje…" }));
+}
+
+function ukazovatelOkresov() {
+  return stav.vrstva === "okolie" ? "okolie" : "na10k";
+}
+
+function popisUkazovatela() {
+  return stav.vrstva === "okolie" ? `na 10 000 v okolí ${meta.spadova_oblast_km} km` : "na 10 000";
+}
+
+async function obnovVrstvy(aktualny) {
   const prefix = stav.typ.toLowerCase();
   const nazovTypu = meta.nazvy_typov[stav.typ].toLowerCase();
   if (stav.vrstva === "obce") {
+    legenda.replaceChildren(el("span", { trieda: "titulok", text: "Načítavam obce…" }));
     const obce = await indexObci();
+    if (!aktualny()) return;
     vrstvaObci.zobraz(obce, stav.typ, meta.legenda.vzdialenost_km);
     vykresliLegendu(
       legenda,
@@ -88,16 +110,23 @@ async function obnovVrstvy() {
   );
 }
 
-function ukazovatelOkresov() {
-  return stav.vrstva === "okolie" ? "okolie" : "na10k";
+function popisVyberu(zoznam, indexy) {
+  const prvy = zoznam[indexy[0]];
+  const casti = [formatKm(prvy.km)];
+  if (indexy.length > 1) casti.push(`adries na tomto bode: ${indexy.length}`);
+  else if (prvy.ambulancia.pocet > 1) casti.push(`ambulancií: ${prvy.ambulancia.pocet}`);
+  return { nadpis: prvy.ambulancia.nazov || prvy.ambulancia.adresa || "Adresa v registri chýba", riadok: casti.join(" · ") };
 }
 
-async function zobrazObec(obec) {
+async function zobrazObec(obec, aktualny) {
   const data = await nacitajJson("data/ambulancie.json");
+  if (!aktualny()) return;
+  panel.removeAttribute("aria-busy");
+  stav.priblizene = true;
   const vsetky = data.ambulancie
     .map((ambulancia) => ({ ambulancia, km: haversineKm(obec.lat, obec.lon, ambulancia.lat, ambulancia.lon) }))
     .filter((zaznam) => zaznam.km <= meta.max_zoznam_km)
-    .sort((x, y) => x.km - y.km || x.ambulancia.nazov.localeCompare(y.ambulancia.nazov, "sk"));
+    .sort((x, y) => x.km - y.km || x.ambulancia.adresa.localeCompare(y.ambulancia.adresa, "sk"));
   const pocitadla = {};
   for (const zaznam of vsetky) {
     const typ = zaznam.ambulancia.typ;
@@ -106,40 +135,67 @@ async function zobrazObec(obec) {
   }
   const zoznamTypu = vsetky.filter((zaznam) => zaznam.ambulancia.typ === stav.typ);
   vrstvaOkresov.obnov({ vybrany: obec.okres_kod, priehladne: true, lenObrys: stav.vrstva === "obce" });
-  const vyber = (index) => {
-    vrstvaOkolia.zvyrazni(index);
-    if (zvyrazniKartu) zvyrazniKartu(index);
+  let zvyrazniKartu = null;
+  const vyber = (indexy, zMapy) => {
+    vrstvaOkolia.zvyrazni(indexy);
+    const karta = zvyrazniKartu(indexy, zMapy && !jeMobil());
+    const { nadpis, riadok } = popisVyberu(zoznamTypu, indexy);
+    lista.zobraz(nadpis, riadok, () => karta.scrollIntoView());
   };
-  vrstvaOkolia.zobraz(obec, zoznamTypu, meta.polomery_km, vyber);
-  zvyrazniKartu = vykresliObec(panel, obec, okresPodlaKodu(obec.okres_kod), stav.typ, meta, vsetky, vyber);
+  vrstvaOkolia.zobraz(obec, zoznamTypu, meta.polomery_km, (indexy) => vyber(indexy, true));
+  zvyrazniKartu = vykresliObec(panel, obec, okresPodlaKodu(obec.okres_kod), stav.typ, meta, vsetky, (index) => vyber([index], false));
   vstup.value = obec.nazov;
+  const prefix = stav.typ.toLowerCase();
+  const polomer = meta.polomery_km[0];
+  lista.zobraz(
+    obec.nazov,
+    `Najbližšia ${formatKm(obec[`${prefix}_km`])} · do ${polomer} km: ${formatCislo(obec[`${prefix}_${polomer}`])}`,
+    () => panel.scrollIntoView(),
+  );
 }
 
 async function aplikujStav() {
+  poslednyBeh += 1;
+  const beh = poslednyBeh;
+  const aktualny = () => beh === poslednyBeh;
   const hash = citajHash();
   stav.typ = platnyTyp(hash.typ);
   stav.vrstva = ["okolie", "obce"].includes(hash.vrstva) ? hash.vrstva : "okresy";
   synchronizujPrepinac();
-  await obnovVrstvy();
+  panel.removeAttribute("aria-busy");
+  if (hash.obec) zobrazNacitavanie();
+  await obnovVrstvy(aktualny);
+  if (!aktualny()) return;
   if (hash.obec) {
     const obec = (await indexObci()).find((o) => o.kod === hash.obec);
+    if (!aktualny()) return;
     if (obec) {
-      await zobrazObec(obec);
+      await zobrazObec(obec, aktualny);
       return;
     }
+    panel.removeAttribute("aria-busy");
   }
   vrstvaOkolia.vycisti();
-  zvyrazniKartu = null;
+  if (document.activeElement !== vstup) vstup.value = "";
   const okres = hash.okres ? okresPodlaKodu(hash.okres) : null;
+  if (!okres && stav.priblizene) {
+    zobrazSlovensko(mapa);
+    stav.priblizene = false;
+  }
   vrstvaOkresov.obnov({ vybrany: okres ? okres.properties.kod : null, priehladne: false, lenObrys: stav.vrstva === "obce" });
   if (okres) {
     vykresliOkres(panel, okres, stav.typ, meta, okresy.features.length);
+    const hodnota = okres.properties[`${stav.typ.toLowerCase()}_${ukazovatelOkresov()}`];
+    lista.zobraz(`Okres ${okres.properties.nazov}`, `${formatNa10k(hodnota)} ${popisUkazovatela()}`, () => panel.scrollIntoView());
   } else {
     panel.replaceChildren(...uvodPanela.map((uzol) => uzol.cloneNode(true)));
+    lista.skry();
   }
 }
 
 function zobrazChybu(chyba) {
+  panel.removeAttribute("aria-busy");
+  legenda.replaceChildren();
   vykresliChybu(panel, `Skúste stránku obnoviť. Podrobnosti: ${chyba.message}`);
 }
 
@@ -147,11 +203,17 @@ async function start() {
   [meta, okresy] = await Promise.all([nacitajJson("data/meta.json"), nacitajJson("data/okresy.geojson")]);
   stav.typ = platnyTyp(citajHash().typ);
   zobrazZastarane();
-  const mapa = vytvorMapu("mapa", meta);
+  mapa = vytvorMapu("mapa", meta);
+  lista = new SpodnaLista(document.getElementById("lista"), document.getElementById("mapa"));
+  pridajTlacidloSlovensko(mapa, () => {
+    zobrazSlovensko(mapa);
+    stav.priblizene = false;
+    zapisHash({ obec: null, okres: null });
+  });
   vrstvaOkresov = new VrstvaOkresov(mapa, okresy, {
     typ: () => stav.typ,
     ukazovatel: ukazovatelOkresov,
-    popis: () => (stav.vrstva === "okolie" ? `na 10 000 v okolí ${meta.spadova_oblast_km} km` : "na 10 000"),
+    popis: popisUkazovatela,
     hranice: () => meta.legenda[stav.typ],
     priKliknuti: (feature) => zapisHash({ okres: feature.properties.kod, obec: null }),
   });

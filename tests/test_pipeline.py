@@ -74,7 +74,14 @@ def test_full_pipeline_on_fixtures_is_valid_and_deterministic():
 
     ambulancie = json.loads((SITE / "data" / "ambulancie.json").read_text(encoding="utf-8"))["ambulancie"]
     assert all(set(a) == AMBULANCE_KEYS for a in ambulancie)
-    names = {a["nazov"] for a in ambulancie}
+    assert sum(a["pocet"] for a in ambulancie) == 16
+    assert meta["nazvy"] is False
+    con = sqlite3.connect(BASE / "local" / "lekari.sqlite")
+    try:
+        names = {r[0] for r in con.execute("SELECT nazov FROM ambulancia")}
+        assert {r[0] for r in con.execute("SELECT vysledok FROM validacia WHERE kod IN ('V6.7', 'V6.8')")} == {"OK"}
+    finally:
+        con.close()
     assert "Zablokovaná ambulancia" not in names
     assert "Ukončená ambulancia" not in names
     assert "Denný stacionár Pokusy" not in names

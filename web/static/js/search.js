@@ -1,16 +1,21 @@
 import { bezDiakritiky, el } from "./util.js";
 
-const MAX_NAVRHOV = 8;
+const MAX_NAVRHOV = 30;
+
+function porovnajObce(x, y) {
+  return x.nazov.localeCompare(y.nazov, "sk") || (x.okresNazov || "").localeCompare(y.okresNazov || "", "sk");
+}
+
+export function zoradNavrhy(obce, dotaz, max = MAX_NAVRHOV) {
+  const presne = obce.filter((obec) => obec.kluc === dotaz);
+  const zaciatok = obce.filter((obec) => obec.kluc !== dotaz && obec.kluc.startsWith(dotaz));
+  const obsahuje = obce.filter((obec) => !obec.kluc.startsWith(dotaz) && obec.kluc.includes(dotaz));
+  return [presne, zaciatok, obsahuje].flatMap((skupina) => skupina.sort(porovnajObce)).slice(0, max);
+}
 
 export function nastavHladanie(vstup, zoznam, nacitajIndex, priVybere) {
-  let index = null;
   let navrhy = [];
   let aktivny = -1;
-
-  async function zabezpecIndex() {
-    if (!index) index = await nacitajIndex();
-    return index;
-  }
 
   function zatvor() {
     zoznam.hidden = true;
@@ -23,46 +28,61 @@ export function nastavHladanie(vstup, zoznam, nacitajIndex, priVybere) {
   function vyber(obec) {
     vstup.value = obec.nazov;
     zatvor();
+    vstup.blur();
     priVybere(obec);
+  }
+
+  function zobrazSpravu(text) {
+    navrhy = [];
+    zoznam.replaceChildren(el("li", { text, atributy: { "aria-disabled": "true" } }));
+    zoznam.hidden = false;
+    vstup.setAttribute("aria-expanded", "true");
   }
 
   function vykresli() {
     if (!navrhy.length) {
-      zoznam.replaceChildren(el("li", { text: "Žiadna obec sa nenašla.", atributy: { "aria-disabled": "true" } }));
-    } else {
-      zoznam.replaceChildren(
-        ...navrhy.map((obec, i) => {
-          const polozka = el(
-            "li",
-            { atributy: { role: "option", id: `navrh-${i}`, "aria-selected": String(i === aktivny) } },
-            el("span", { text: obec.nazov }),
-            el("span", { trieda: "okres", text: `okres ${obec.okresNazov}` }),
-          );
-          polozka.addEventListener("mousedown", (udalost) => {
-            udalost.preventDefault();
-            vyber(obec);
-          });
-          return polozka;
-        }),
-      );
+      zobrazSpravu("Žiadna obec sa nenašla.");
+      return;
     }
+    zoznam.replaceChildren(
+      ...navrhy.map((obec, i) => {
+        const polozka = el(
+          "li",
+          { atributy: { role: "option", id: `navrh-${i}`, "aria-selected": String(i === aktivny) } },
+          el("span", { text: obec.nazov }),
+          el("span", { trieda: "okres", text: `okres ${obec.okresNazov}` }),
+        );
+        polozka.addEventListener("mousedown", (udalost) => {
+          udalost.preventDefault();
+          vyber(obec);
+        });
+        return polozka;
+      }),
+    );
     zoznam.hidden = false;
     vstup.setAttribute("aria-expanded", "true");
-    if (aktivny >= 0) vstup.setAttribute("aria-activedescendant", `navrh-${aktivny}`);
+    if (aktivny >= 0) {
+      vstup.setAttribute("aria-activedescendant", `navrh-${aktivny}`);
+      document.getElementById(`navrh-${aktivny}`).scrollIntoView({ block: "nearest" });
+    }
   }
 
-  vstup.addEventListener("focus", () => zabezpecIndex(), { once: true });
+  vstup.addEventListener("focus", () => nacitajIndex().catch(() => {}), { once: true });
 
   vstup.addEventListener("input", async () => {
-    const data = await zabezpecIndex();
+    let data;
+    try {
+      data = await nacitajIndex();
+    } catch {
+      zobrazSpravu("Zoznam obcí sa nepodarilo načítať. Skúste stránku obnoviť.");
+      return;
+    }
     const dotaz = bezDiakritiky(vstup.value);
     if (dotaz.length < 2) {
       zatvor();
       return;
     }
-    const zaciatok = data.filter((obec) => obec.kluc.startsWith(dotaz));
-    const obsahuje = data.filter((obec) => !obec.kluc.startsWith(dotaz) && obec.kluc.includes(dotaz));
-    navrhy = zaciatok.concat(obsahuje).slice(0, MAX_NAVRHOV);
+    navrhy = zoradNavrhy(data, dotaz);
     aktivny = navrhy.length ? 0 : -1;
     vykresli();
   });
