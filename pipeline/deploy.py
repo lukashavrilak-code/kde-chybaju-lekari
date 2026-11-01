@@ -1,12 +1,24 @@
 import json
 import shutil
 import subprocess
-import sys
-from pathlib import Path
+import tarfile
 
 from .checks import PipelineError
 from .config import ROOT, project_path
 from .export import pipeline_version
+
+RELEASE = "web-balik"
+WORKFLOW = "nasadenie.yml"
+ARCHIVE_NAME = "site.tar.gz"
+
+
+def pushed_to_origin():
+    def rev(ref):
+        return subprocess.run(["git", "rev-parse", ref], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+    try:
+        return rev("HEAD") == rev("origin/main")
+    except (OSError, subprocess.CalledProcessError):
+        return False
 
 
 def deploy_problems(cfg, site):
@@ -24,6 +36,8 @@ def deploy_problems(cfg, site):
         problems.append("v Gite sú neuložené zmeny alebo chýba commit")
     if meta.get("verzia_pipeline") != current:
         problems.append(f"web bol vygenerovaný inou verziou ({meta.get('verzia_pipeline')}), aktuálna je {current}")
+    if not pushed_to_origin():
+        problems.append("aktuálny commit nie je odoslaný do origin/main (verzia na webe by neodkazovala na verejný kód)")
     projekt = cfg["projekt"]
     if not projekt["prevadzkovatel"].strip() or not projekt["kontakt_email"].strip():
         problems.append("chýba prevádzkovateľ (config.toml) alebo kontaktný e-mail (config.local.toml)")
@@ -34,7 +48,26 @@ def deploy_problems(cfg, site):
     for page in site.glob("*.html"):
         if "[DOPLŇ" in page.read_text(encoding="utf-8"):
             problems.append(f"{page.name} obsahuje nevyplnený text [DOPLŇ …]")
+    ambulancie = site / "data" / "ambulancie.json"
+    if not cfg["zverejnit"].get("nazvy") and ambulancie.exists():
+        items = json.loads(ambulancie.read_text(encoding="utf-8"))["ambulancie"]
+        if any("nazov" in item for item in items):
+            problems.append("ambulancie.json obsahuje názvy poskytovateľov, hoci sú vypnuté ([zverejnit] nazvy)")
     return problems
+
+
+def normalized_member(member):
+    member.mode = 0o755 if member.isdir() else 0o644
+    member.uid = member.gid = 0
+    member.uname = member.gname = ""
+    return member
+
+
+def build_archive(site, target):
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(target, "w:gz") as archive:
+        archive.add(site, arcname=".", filter=normalized_member)
+    return target
 
 
 def deploy(cfg):
@@ -42,11 +75,17 @@ def deploy(cfg):
     problems = deploy_problems(cfg, site)
     if problems:
         raise PipelineError("Nasadenie zastavené:\n  - " + "\n  - ".join(problems))
-    executable = shutil.which("ghp-import") or str(Path(sys.executable).parent / "ghp-import")
+    gh = shutil.which("gh")
+    if not gh:
+        raise PipelineError("Chýba GitHub CLI. Nainštaluj ho (winget install GitHub.cli) a prihlás sa (gh auth login).")
     meta = json.loads((site / "data" / "meta.json").read_text(encoding="utf-8"))
-    message = f"Web: register k {meta['stav_registra']}, pipeline {meta['verzia_pipeline']}"
-    subprocess.run(
-        [executable, "--no-history", "--no-jekyll", "--push", "--force", "-m", message, str(site)],
-        cwd=ROOT, check=True,
-    )
-    print("Nasadené do vetvy gh-pages.")
+    archive = build_archive(site, ROOT / "build" / ARCHIVE_NAME)
+    release = subprocess.run([gh, "release", "view", RELEASE, "--json", "isDraft"], cwd=ROOT, capture_output=True, text=True, check=False)
+    if release.returncode != 0:
+        notes = "Neverejný balík pre workflow Nasadenie webu. Nepublikovať."
+        subprocess.run([gh, "release", "create", RELEASE, "--draft", "--title", RELEASE, "--notes", notes], cwd=ROOT, check=True)
+    elif not json.loads(release.stdout)["isDraft"]:
+        raise PipelineError(f"Vydanie {RELEASE} nie je draft, balík by bol verejný. Nasadenie zastavené.")
+    subprocess.run([gh, "release", "upload", RELEASE, str(archive), "--clobber"], cwd=ROOT, check=True)
+    subprocess.run([gh, "workflow", "run", WORKFLOW], cwd=ROOT, check=True)
+    print(f"Nasadenie spustené: register k {meta['stav_registra']}, pipeline {meta['verzia_pipeline']}. Priebeh: gh run watch")

@@ -1,0 +1,47 @@
+name: Nasadenie webu
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  balik:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Stiahnutie balíka z neverejného draftu
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release download web-balik --pattern site.tar.gz
+          mkdir site
+          tar -xzf site.tar.gz -C site
+      - name: Príprava artefaktu pre Pages
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+          retention-days: 1
+
+  nasadenie:
+    needs: balik
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.nasadenie.outputs.page_url }}
+    steps:
+      - name: Nasadenie na GitHub Pages
+        id: nasadenie
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

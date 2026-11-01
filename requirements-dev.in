@@ -1,7 +1,7 @@
 -c requirements.txt
-ghp-import
 pip-audit
 pip-tools
+playwright
 pre-commit
 pytest
 ruff
