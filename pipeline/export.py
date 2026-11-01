@@ -15,7 +15,7 @@ from .site import build_site
 TYPE_NAMES = {"VLD": "Všeobecný lekár pre dospelých", "VLDD": "Pediater prvého kontaktu"}
 DENOMINATOR_NAMES = {"VLD": "dospelých (18+)", "VLDD": "detí (0 – 17)"}
 AMBULANCE_KEYS = {"typ", "adresa", "lat", "lon", "presnost", "pocet"}
-ALLOWED_EXTENSIONS = {".html", ".css", ".js", ".json", ".geojson", ".csv", ".png", ".svg", ".txt"}
+ALLOWED_EXTENSIONS = {".html", ".css", ".js", ".json", ".geojson", ".csv", ".png", ".jpg", ".svg", ".txt"}
 SK_BOUNDS = {"lat": (47.7, 49.7), "lon": (16.8, 22.6)}
 MIN_NAME_LENGTH = 8
 FIRST_LOAD = ["index.html", "static/css/style.css", "data/meta.json", "data/okresy.geojson"]
@@ -135,7 +135,7 @@ def names_in_site(names, site):
     long_names = [name for name in names if len(name) >= MIN_NAME_LENGTH]
     found = []
     for path in sorted(site.rglob("*")):
-        if path.is_file() and path.suffix.lower() != ".png" and "vendor" not in path.parts:
+        if path.is_file() and path.suffix.lower() not in (".png", ".jpg") and "vendor" not in path.parts:
             text = path.read_text(encoding="utf-8-sig", errors="ignore")
             if any(name in text for name in long_names):
                 found.append(path.relative_to(site).as_posix())

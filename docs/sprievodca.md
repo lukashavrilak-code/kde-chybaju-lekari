@@ -1,10 +1,8 @@
-# Sprievodca projektom
+# Technický prehľad
 
-Tento text vysvetľuje, ako web funguje, čo robí pipeline a ako sa počítajú ukazovatele. Presné definície ukazovateľov sú v [metodike](metodika.md), postup mesačnej aktualizácie v [runbooku](runbook.md). Tu je to isté vysvetlené jednoduchšie a s odkazmi do kódu.
+Ako funguje web, čo robí pipeline a ako sa počítajú ukazovatele, s odkazmi do kódu. Presné definície ukazovateľov sú v [metodike](metodika.md), mesačná prevádzka v [runbooku](runbook.md).
 
-Odporúčané poradie: najprv si pozri web (časť 1), potom spusti pipeline na umelých dátach (časť 2) a až potom čítaj ostatné časti.
-
-## 1. Prehliadka webu
+## 1. Web
 
 ### Spustenie náhľadu
 
@@ -14,19 +12,13 @@ python -m pipeline serve --fixtures         # umelé dáta (časť 2)
 python -m pipeline serve --host 0.0.0.0     # náhľad aj z telefónu v domácej Wi-Fi
 ```
 
-Pri `--host 0.0.0.0` príkaz vypíše adresu, ktorú otvoríš v telefóne (napr. `http://192.168.1.20:8000/`). Treba pri tom:
-
-- pri prvom spustení povoliť Python vo Windows Firewall iba pre **súkromné siete**,
-- mať domácu Wi-Fi vo Windows nastavenú ako súkromnú sieť,
-- mať telefón v tej istej Wi-Fi.
-
-Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa tým nezverejňuje.
+Pri `--host 0.0.0.0` príkaz vypíše adresu pre telefón v tej istej Wi-Fi. Vo Windows Firewall treba Python povoliť iba pre súkromné siete. Náhľad je určený iba do domácej siete.
 
 ### Čo je na ktorej stránke
 
 | Stránka | Čo ukazuje | Šablóna | JavaScript | Dáta |
 |---|---|---|---|---|
-| Mapa | okresy zafarbené podľa U2 alebo U8, obce podľa vzdialenosti (U3), legenda, panel okresu a obce, vyhľadanie obce | `index.html` | všetky moduly | `meta.json`, `okresy.geojson`, neskôr `obce.json` a `ambulancie.json` |
+| Mapa | okresy zafarbené podľa U2 alebo U8, obce podľa vzdialenosti (U3), legenda, panel okresu a obce, vyhľadanie obce, spodná lišta na mobile | `index.html` | všetky moduly | `meta.json`, `okresy.geojson`, neskôr `obce.json` a `ambulancie.json` |
 | Rebríčky | 10 najhorších okresov podľa U2 a podľa U8, 10 najlepších podľa U2, celé poradie s pracoviskami a U8, poznámka k mestským okresom, tabuľka krajov s úväzkami lekárov z NCZI (U9) | `rebricky.html` | žiadny | vypočítané v Pythone pri exporte |
 | Dáta | CSV na stiahnutie a popis stĺpcov | `data.html` | žiadny | `downloads/*.csv` |
 | Metodika | text z `docs/metodika.md` a tabuľka „Aktuálny stav dát“ | `metodika.html` | žiadny | – |
@@ -39,10 +31,11 @@ Náhľad používaj iba doma a po skončení ho zastav klávesmi Ctrl+C. Nič sa
 
 | Súbor | Úloha |
 |---|---|
-| `app.js` | riadi stránku: načíta dáta, číta a zapisuje stav v adrese a reaguje na kliknutia |
+| `app.js` | riadi stránku: načíta dáta, číta a zapisuje stav v adrese, reaguje na kliknutia a pri pomalej sieti zahodí výsledok staršieho výberu |
 | `map.js` | mapa Leaflet, farby okresov, vrstva obcí podľa vzdialenosti, legenda, okruhy 10 a 20 km a body ambulancií |
 | `panel.js` | obsah panela vpravo (na mobile pod mapou): okres, obec, karty ambulancií |
-| `search.js` | vyhľadávanie obce s návrhmi (funguje aj bez diakritiky) |
+| `search.js` | vyhľadávanie obce s návrhmi (funguje aj bez diakritiky, presný názov je vždy prvý) |
+| `lista.js` | spodná lišta na mobile: čo je vybrané a tlačidlá „Detail“ a „↑ Mapa“ |
 | `util.js` | pomocné funkcie: vzdialenosť (haversine), formát čísel, `el()` na tvorbu prvkov, načítanie JSON |
 
 Pri otvorení mapy sa načítajú iba `meta.json` a `okresy.geojson`. Zoznam obcí (`obce.json`) sa načíta až pri kliknutí do vyhľadávania. Zoznam ambulancií (`ambulancie.json`) sa načíta až po výbere obce. Prvé načítanie je tak menšie.
@@ -51,7 +44,7 @@ Pri otvorení mapy sa načítajú iba `meta.json` a `okresy.geojson`. Zoznam obc
 
 **Stav v adrese.** Výber sa zapisuje za znak `#`, napr. `index.html#typ=VLDD&obec=<kód obce>`, `#okres=<kód okresu>`, `#vrstva=okolie` (okresy podľa U8) alebo `#vrstva=obce` (mapa obcí podľa vzdialenosti). Takýto odkaz sa dá poslať a tlačidlo Späť v prehliadači funguje (udalosť `hashchange` v `app.js`).
 
-**Prečo nikde nie je `innerHTML`.** Názvy a adresy z registra sa do stránky vkladajú iba ako text, cez funkciu `el()` (vlastnosť `textContent`). Aj keby register obsahoval kód HTML, zobrazí sa ako obyčajný text. Umelé dáta preto zámerne obsahujú názov `<img src=x onerror=alert(1)>`. `scripts/check_repo.py` zakázané vzory v JS kontroluje.
+**Prečo nikde nie je `innerHTML`.** Adresy z registra sa do stránky vkladajú iba ako text, cez funkciu `el()` (vlastnosť `textContent`). Aj keby register obsahoval kód HTML, zobrazí sa ako obyčajný text. Test `test_html_in_address_stays_text` to overuje v prehliadači. `scripts/check_repo.py` zakázané vzory v JS kontroluje.
 
 **CSP (Content Security Policy).** Riadok `<meta http-equiv="Content-Security-Policy">` v `base.html` povie prehliadaču, odkiaľ smie stránka niečo načítať: skripty a štýly iba z vlastného webu, obrázky aj z `tile.openstreetmap.org` (mapové dlaždice). Inline skripty a štýly sú zakázané. Pravidlo je v `pipeline/site.py` (konštanta `CSP`).
 
@@ -59,36 +52,14 @@ Pri otvorení mapy sa načítajú iba `meta.json` a `okresy.geojson`. Zoznam obc
 
 **Upozornenie na staré dáta.** Ak je register starší ako 60 dní (`[web] zastarane_po_dnoch`), web zobrazí upozornenie.
 
-### Kontrolný zoznam na prehliadku
-
-Na počítači:
-- [ ] Mapa: farby okresov a legenda. Sedí počet okresov v zátvorkách v legende?
-- [ ] Prepínač „Lekári pre dospelých / Pediatri“: zmenia sa farby aj legenda?
-- [ ] Klik na okres: panel s ukazovateľmi U1, U6, U2, U5, U8 a U7. Ikona ⓘ vedie do metodiky. Pri mestských okresoch Bratislavy a Košíc je navyše poznámka.
-- [ ] Prepínač „Mapa: Okresy – okolie 10 km“: farby podľa U8. Porovnaj Košice III a Bratislavu I s režimom „Okresy“.
-- [ ] Prepínač „Mapa: Obce podľa vzdialenosti“: každá obec je bod, tmavší bod = bližšie k ambulancii. Klik na bod vyberie obec, a to aj vo vybranom okrese.
-- [ ] Vyhľadanie obce (skús aj bez diakritiky): okruhy 10 a 20 km, body ambulancií, panel obce.
-- [ ] Karty ambulancií: „Zobraziť ďalšie“, „Kontakt a ordinačné hodiny“, „Nahlásiť chybu v zázname“.
-- [ ] Klik na bod na mape zvýrazní kartu a klik na kartu zvýrazní bod.
-- [ ] Skopíruj adresu stránky s vybranou obcou a otvor ju v novom okne. Ukáže sa to isté?
-- [ ] Rebríčky, Dáta (stiahni CSV), Metodika, Súkromie, neexistujúca adresa (404).
-
-Na telefóne:
-- [ ] posun a zoom mapy prstami, ťuknutie na okres. Všimneš si, že sa zmenil panel pod mapou?
-- [ ] vyhľadávanie: neschovajú sa návrhy pod klávesnicu? Vyberie ťuknutie na návrh obec?
-- [ ] tabuľka „Celé poradie“ na stránke Rebríčky: nepretečie doprava?
-- [ ] je vidieť legenda a atribúcia OpenStreetMap?
-
-Postrehy a nápady zapisuj (alebo hovor AI), čo by si zmenil, pridal alebo zlepšil.
-
-## 2. Ako začať: umelé dáta
+## 2. Umelé dáta
 
 ```powershell
 python -m pipeline all --fixtures
 python -m pipeline serve --fixtures
 ```
 
-Prvý príkaz spustí celú pipeline na umelých dátach z `pipeline/fixtures.py` a všetko uloží do `build/fixtures/`. Je to malé a dá sa to prepočítať ručne:
+Prvý príkaz spustí celú pipeline na umelých dátach z `pipeline/fixtures.py` a všetko uloží do `build/fixtures/`. Dáta sú malé a dajú sa prepočítať ručne:
 
 - 6 obcí v 3 okresoch a 2 krajoch,
 - 24 riadkov registra, z ktorých na web prejde 16 ambulancií (12 VLD a 4 VLDD),
@@ -105,8 +76,6 @@ Prvý príkaz spustí celú pipeline na umelých dátach z `pipeline/fixtures.py
 | `history/` | agregovaná história počtov |
 | `site/` | hotový web |
 
-Dobré cvičenie: otvor `pipeline/fixtures.py`, nájdi zoznam `AMBULANCIE` a pri každom chybnom zázname zisti, prečo sa nedostal na web. Pomôžu ti `local/reports/validacia_2026-10-01.md` a tabuľky `ambulancia` a `validacia`.
-
 ## 3. Kroky pipeline
 
 Príkaz `python -m pipeline all` spustí kroky v tomto poradí. Každý krok sa dá spustiť aj samostatne, napr. `python -m pipeline compute`.
@@ -120,7 +89,7 @@ Príkaz `python -m pipeline all` spustí kroky v tomto poradí. Každý krok sa 
 | 5 | `nczi` | `nczi.py` | súbor NCZI (stiahne sa raz) | tabuľka `nczi_porovnanie` (počty útvarov aj úväzky lekárov), report `nczi_rozdiel_*.md` | V3.7 pomer register / NCZI, úväzky za SR a súčet krajov (iba upozornenie) |
 | 6 | `geocode` | `geocode.py` | adresy ambulancií, cache, `data/manual/geocode_overrides.csv` | tabuľka `geokod`, `data/cache/geocode_cache.csv`, reporty `geokod_*.csv` | V4.1 až V4.6 poloha, obec, presnosť, zhluky |
 | 7 | `compute` | `compute.py` | ambulancie s polohou, obce, okresy | tabuľky `ukazovatel_okres` a `ukazovatel_obec`, `data/history/pocty_okresy.csv` | V5.1 súčty, V5.2 menovateľ a odľahlé hodnoty, V5.4 zmeny v čase, V5.5 konzistentnosť, V5.6 obce s ambulanciou, no s referenčným bodom ďaleko od nej, V5.7 U8 rozdelí všetky ambulancie presne raz |
-| 8 | `export` | `export.py`, `site.py` | všetky tabuľky | `site/` (HTML, `data/*.json`, `downloads/*.csv`), report validácie | V6.1 až V6.6 povolené kľúče, veľkosti súborov, súradnice, upozornenie, typy súborov, CSV bez vzorcov |
+| 8 | `export` | `export.py`, `site.py` | všetky tabuľky | `site/` (HTML, `data/*.json`, `downloads/*.csv`), report validácie | V6.1 až V6.8 povolené kľúče, veľkosti súborov, súradnice, upozornenie, typy súborov, CSV bez vzorcov, žiadne názvy na webe, súčet počtov |
 
 `areas` beží hneď po `download`, lebo `clean` potrebuje tabuľku obcí na priradenie obce k adrese. Diagram v README ukazuje tie isté kroky zjednodušene.
 
@@ -138,7 +107,7 @@ Všetky medzivýsledky sú v SQLite súbore `data/local/lekari.sqlite`. Schéma 
 |---|---|---|
 | `snapshot` | jeden riadok = jeden stiahnutý súbor registra (dátum stavu, URL, SHA-256) | `snapshot_id` |
 | `odbornost_pocet` | počty kódov podľa odbornosti v celom registri | `snapshot_id`, `odbornost_kod` |
-| `ambulancia` | vyčistené platné ambulancie VLD a VLDD: názov, IČO, adresa, platnosť | `snapshot_id`, `pzs_kod` |
+| `ambulancia` | vyčistené platné ambulancie VLD a VLDD: názov (iba lokálne), IČO, adresa, platnosť | `snapshot_id`, `pzs_kod` |
 | `geokod` | poloha každej adresy: súradnice, presnosť, zdroj, obec | `adresa_kluc` |
 | `adresa_obec` | ku ktorej obci (obciam) patrí názov obce z adresy | `adresa_kluc`, `obec_kod` |
 | `obec` | 2 927 obcí: názov, okres, kraj, referenčný bod a jeho zdroj (`ref_zdroj`: `sidlo` alebo `stred`), obyvatelia | `obec_kod` |
@@ -150,7 +119,7 @@ Všetky medzivýsledky sú v SQLite súbore `data/local/lekari.sqlite`. Schéma 
 | `validacia` | výsledky všetkých kontrol | – |
 | `v_ambulancia` (pohľad) | ambulancia + poloha z `geokod` + obec, okres a kraj | – |
 
-Cesta od ambulancie k okresu: `ambulancia.adresa_kluc` → `geokod.adresa_kluc` → `geokod.obec_kod` → `obec.obec_kod` → `obec.okres_kod` → `okres.okres_kod`. Pohľad `v_ambulancia` tieto spojenia robí za teba.
+Cesta od ambulancie k okresu: `ambulancia.adresa_kluc` → `geokod.adresa_kluc` → `geokod.obec_kod` → `obec.obec_kod` → `obec.okres_kod` → `okres.okres_kod`. Pohľad `v_ambulancia` tieto spojenia robí automaticky.
 
 ## 5. Štatistika jednoducho
 
@@ -215,7 +184,7 @@ Príklad z `tests/test_compute.py`: obce A (1 000 dospelých), B (3 000 dospelý
 - Ambulancia v C patrí iba 1 000 ľuďom z C, takže C dostane **10 na 10 000**.
 - Ambulancia bez obyvateľov do 10 km sa nezapočíta nikomu.
 
-**Zákon zachovania (kontrola V5.7).** Ak vynásobíš hodnotu každej obce jej počtom obyvateľov a sčítaš (a vydelíš 10 000), dostaneš presne počet ambulancií, ktoré majú niekoho do 10 km. V príklade: (2,5 · 1 000 + 2,5 · 3 000 + 10 · 1 000) / 10 000 = 2. Pri reálnych dátach je to 2 433 z 2 433 ambulancií VLD. Žiadna ambulancia sa tak nestratí ani nezapočíta dvakrát.
+**Zákon zachovania (kontrola V5.7).** Súčin hodnoty každej obce a jej počtu obyvateľov, sčítaný a vydelený 10 000, dáva presne počet ambulancií, ktoré majú niekoho do 10 km. V príklade: (2,5 · 1 000 + 2,5 · 3 000 + 10 · 1 000) / 10 000 = 2. Pri reálnych dátach je to 2 433 z 2 433 ambulancií VLD. Žiadna ambulancia sa tak nestratí ani nezapočíta dvakrát.
 
 Výsledok pri VLD (register k 1. 10. 2026):
 
@@ -268,11 +237,9 @@ Hranice farieb sú pevne dané v `config.toml`, sekcia `[legenda]`: VLD 4, 5, 6 
 - **Rôzne dátumy.** Register je k 1. 10. 2026, obyvatelia sú stredný stav 2025 a NCZI je k 31. 12. 2024.
 - **Kód nie je lekár.** Jeden kód je jedna ambulancia v registri, nie jeden lekár ani úväzok.
 
-## 6. Vyskúšaj sám: SQL dotazy
+## 6. SQL dotazy
 
-**DB Browser for SQLite** (https://sqlitebrowser.org, zadarmo): menu File → **Open Database Read Only**, súbor `data/local/lekari.sqlite`, alebo `build/fixtures/local/lekari.sqlite` pre umelé dáta. Dotazy píš na karte Execute SQL. Databázu otváraj iba vtedy, keď pipeline nebeží.
-
-To isté v Pythone (iba na čítanie):
+Databáza `data/local/lekari.sqlite` (pre umelé dáta `build/fixtures/local/lekari.sqlite`) sa dá otvoriť napríklad v DB Browser for SQLite iba na čítanie, keď pipeline nebeží. V Pythone:
 
 ```python
 import sqlite3
@@ -282,7 +249,7 @@ con = sqlite3.connect("file:data/local/lekari.sqlite?mode=ro", uri=True)
 pd.read_sql("SELECT typ, COUNT(*) AS pocet FROM ambulancia GROUP BY typ", con)
 ```
 
-Každý dotaz nižšie začína riadkom `WITH posledny AS (...)`, ktorý vyberie posledný snapshot registra. Výsledky s menami poskytovateľov nikdy nekopíruj do súborov v Gite.
+Každý dotaz nižšie začína riadkom `WITH posledny AS (...)`, ktorý vyberie posledný snapshot registra. Výsledky s menami poskytovateľov nepatria do súborov v Gite.
 
 **1. Počet ambulancií podľa kraja a typu.** Kraj je tu podľa polohy ambulancie, preto sa čísla môžu mierne líšiť od porovnania s NCZI (dotaz 9).
 

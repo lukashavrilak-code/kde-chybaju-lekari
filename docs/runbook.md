@@ -43,8 +43,8 @@ Zrušenie: `schtasks /Delete /TN "Lekari - kontrola registra"`.
 4. `python -m pipeline compute` a `export`.
 5. Otvor `data/local/reports/validacia_RRRR-MM-DD.md`. Každý FAIL vyrieš, každý WARN vysvetli v `docs/overenia.md` alebo v metodike.
 6. Otvor `data/local/reports/geokod_mimo_obce_RRRR-MM-DD.csv`. Stĺpec `riesenie` hovorí, čo pipeline urobila, keď prvý bod nepadol do obce z registra: „tolerancia pri hranici obce“, „iný kandidát v obci“, „stred obce“ (správna obec, nepresný bod) alebo „na ručnú kontrolu“. Pozri aj `geokod_kontrola_RRRR-MM-DD.csv` (adresy s presnosťou iba na obec). Sporné adresy dohľadaj ručne a zapíš do `data/manual/geocode_overrides.csv`. Súradnice ber z vlastného overenia alebo z mapy ZBGIS (https://zbgis.skgeodesy.sk), nie kopírovaním z OpenStreetMap, lebo súbor je v Gite. Potom spusti `geocode`, `compute` a `export`.
-7. `python -m pipeline serve` a skontroluj web v prehliadači.
-8. Commitni zmeny: história, ručné opravy, CHANGELOG. Cache geokódovania (`data/cache/`) do Gitu nepatrí. Potom `python -m pipeline export` (verzia sa zhoduje s commitom) a `python -m pipeline deploy`.
+7. `python -m pipeline serve` a skontroluj web podľa kontrolného zoznamu na konci tohto súboru.
+8. Commitni zmeny: história, ručné opravy, CHANGELOG. Cache geokódovania (`data/cache/`) do Gitu nepatrí. Odošli ich (`git push`). Potom `python -m pipeline export` (verzia sa zhoduje s commitom) a `python -m pipeline deploy`. Priebeh: `gh run watch`.
 9. Po väčšej zmene (napr. po geokódovaní) môžeš hneď spustiť `python -m pipeline zaloha`. Inak sa záloha urobí sama raz mesačne.
 
 ## Záloha (automaticky)
@@ -83,3 +83,27 @@ Postup pre verejnosť je v metodike (časť „Oprava alebo odstránenie záznam
 ## Uchovávanie
 
 Snapshoty registra v `data/snapshots/udzs/` sú archív (mimo Gitu). Raz za štvrťrok zmaž snapshoty staršie ako 12 mesiacov aj s ich `.sha256`, **aj v cieli zálohy**, lebo `zaloha` v cieli nič nemaže a na webe sľubujeme najviac 12 mesiacov. V SQLite zmaž riadky tabuľky `ambulancia` pre staré snapshoty. Agregovaná história v `data/history/` (vrátane hashov snapshotov) ostáva.
+
+## Kontrolný zoznam webu
+
+Na počítači:
+- [ ] Mapa: farby okresov a legenda. Sedí počet okresov v zátvorkách v legende?
+- [ ] Prepínač „Lekári pre dospelých / Pediatri“: zmenia sa farby aj legenda?
+- [ ] Klik na okres: panel s ukazovateľmi U1, U6, U2, U5, U8 a U7. Ikona ⓘ vedie do metodiky. Pri mestských okresoch Bratislavy a Košíc je navyše poznámka.
+- [ ] Prepínač „Mapa: Okresy – okolie 10 km“: farby podľa U8. Porovnaj Košice III a Bratislavu I s režimom „Okresy“.
+- [ ] Prepínač „Mapa: Obce podľa vzdialenosti“: každá obec je bod, tmavší bod = bližšie k ambulancii. Klik na bod vyberie obec, a to aj vo vybranom okrese.
+- [ ] Vyhľadanie obce (skús aj bez diakritiky): okruhy 10 a 20 km, body ambulancií, panel obce.
+- [ ] Karty ambulancií: „Zobraziť ďalšie“, „Otvoriť v mape“, „Názov, kontakt a ordinačné hodiny“, „Nahlásiť chybu v zázname“.
+- [ ] Tlačidlo „Celé Slovensko“ vráti celú mapu a vyčistí hľadanie.
+- [ ] Klik na bod na mape zvýrazní kartu a klik na kartu zvýrazní bod.
+- [ ] Skopíruj adresu stránky s vybranou obcou a otvor ju v novom okne. Ukáže sa to isté?
+- [ ] Rebríčky, Dáta (stiahni CSV), Metodika, Súkromie, neexistujúca adresa (404).
+
+Na telefóne:
+- [ ] posun a zoom mapy prstami, ťuknutie na okres: objaví sa spodná lišta a „Detail ↓“ posunie na panel.
+- [ ] ťuknutie na bod ambulancie: stránka sa neposunie, „↑ Mapa“ vráti mapu.
+- [ ] vyhľadávanie: neschovajú sa návrhy pod klávesnicu? Vyberie ťuknutie na návrh obec a zatvorí sa klávesnica?
+- [ ] tabuľka „Celé poradie“ na stránke Rebríčky: nepretečie doprava?
+- [ ] je vidieť legenda a atribúcia OpenStreetMap?
+
+Na verejnej adrese navyše: zámok v prehliadači bez varovania, presmerovanie z `http://` na `https://`, 404 na vnorenej adrese so štýlmi, žiadny `Set-Cookie`, náhľad odkazu pri zdieľaní.

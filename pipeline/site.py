@@ -76,10 +76,11 @@ def build_site(cfg, context, site_dir):
     shutil.copytree(ROOT / "web" / "static", static_target, ignore=shutil.ignore_patterns("SHA384SUMS", "LICENSE"))
     shutil.copyfile(LEAFLET / "LICENSE", static_target / "vendor" / "leaflet-1.9.4" / "LICENSE.txt")
     web_url = cfg["projekt"]["web_url"].strip()
+    zaklad = web_url.rstrip("/") + "/" if web_url else ""
     pages = []
     for page in PAGES:
-        koren = web_url.rstrip("/") + "/" if page == "404.html" and web_url else ""
-        html = env.get_template(page).render(**context, stranka=page, koren=koren)
+        koren = zaklad if page == "404.html" else ""
+        html = env.get_template(page).render(**context, stranka=page, koren=koren, zaklad=zaklad)
         path = site_dir / page
         path.write_text(html, encoding="utf-8", newline="\n")
         pages.append(path)

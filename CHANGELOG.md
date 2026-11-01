@@ -2,7 +2,7 @@
 
 Verzia pipeline: MAJOR.MINOR.PATCH. Zmena definície ukazovateľa zvyšuje MINOR a zapisuje sa aj do histórie zmien v metodike.
 
-## 0.1.0 – 2026-10 (nevydané)
+## 0.1.0 – 2026-11
 
 - Prvá verzia: kroky download, validate, clean, areas, nczi, geocode, compute, export, deploy.
 - Ukazovatele U1 až U5 (okresy na 10 000 obyvateľov, vzdialenosti a počty v okolí obcí, poradie okresov).
@@ -25,3 +25,10 @@ Verzia pipeline: MAJOR.MINOR.PATCH. Zmena definície ukazovateľa zvyšuje MINOR
 - Nominatim pri mesačných behoch najviac 4 požiadavky za minútu (`interval_s = 15`, podmienky OSM). Stránka 404 má absolútne odkazy podľa `[projekt] web_url` a `deploy` bez `web_url` web nenasadí.
 - Metodika usporiadaná do tabuliek (prehľad U1 – U9, každý ukazovateľ v tabuľke, poloha, kontroly, NCZI, obmedzenia). Tabuľky z Markdownu sa na mobile posúvajú vo vlastnom rámčeku a dvojstĺpcové sa menia na kartičky. Stránka Súkromie kratšia, prevádzkovateľ Lukas Havrilak, bez konkrétnych lehôt.
 - Farby mapy: tmavšia farba = viac ambulancií (okresy), resp. bližšie k ambulancii (obce). Mapa sa kreslí na canvas, takže vrstva obcí je plynulejšia a body sa ľahšie trafia na telefóne. Body obcí sa dajú vybrať aj v okrese vybranej obce.
+- Web bez názvov poskytovateľov (`[zverejnit] nazvy`), ambulancie na jednej adrese sa zobrazujú spolu s počtom. Kontroly V6.7 (názvy na webe) a V6.8 (súčet počtov).
+- Mobil: hľadanie navrchu, väčšie prepínače, nižšia mapa, spodná lišta s výberom a tlačidlami „Detail“ a „↑ Mapa“. Klepnutie na bod už neposúva stránku.
+- Hľadanie: presný názov obce je vždy prvý, návrhov je do 30, správa pri výpadku zoznamu obcí. Tlačidlo „Celé Slovensko“.
+- Oprava súbehov pri pomalej sieti, stav načítania, kratšie karty, odkaz „Otvoriť v mape“, riadky rebríčkov vedú na mapu.
+- Nasadenie cez GitHub Actions bez vetvy `gh-pages`. Brána nasadenia pozná aj zlyhanie kontroly veľkosti V6.2 a neodoslaný commit.
+- Testy v prehliadači (Playwright) a testy brány nasadenia. `check_repo.py` hľadá názvy z lokálnej databázy v sledovaných súboroch.
+- NCZI v pätičke a citácii, ikona, náhľad pri zdieľaní, `SECURITY.md`.

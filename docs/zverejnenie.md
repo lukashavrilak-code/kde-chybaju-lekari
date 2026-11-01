@@ -1,49 +1,61 @@
-# Zverejnenie – možnosti a otvorené témy
+# Zverejnenie
 
-Stav: **nič nie je zverejnené.** Repozitár nemá vzdialený repozitár (`git remote` je prázdny) a `pipeline deploy` sa nespúšťal. Tento súbor iba zapisuje možnosti, aby sa dalo rozhodnúť neskôr. Rozhodnutia sa zapisujú sem alebo do `docs/overenia.md` (dátum, čo a prečo).
+Stav: **pripravené, zatiaľ nezverejnené.** Vzdialený repozitár sa vytvára až po výslovnom súhlase autora (`CLAUDE.md`).
 
-## 1. Cieľ
+## 1. Rozhodnutia autora (1. 11. 2026)
 
-- Funkčný verejný odkaz na web s reálnymi dátami, bez platby a bez vlastnej domény.
-- Autor vystupuje pod vlastným menom: prevádzkovateľ na stránke Súkromie a držiteľ práv v `LICENSE` je Lukas Havrilak (rozhodnutie autora z 31. 10. 2026, O19).
+| Téma | Rozhodnutie | Prečo |
+|---|---|---|
+| Hosting | GitHub Pages, nasadenie cez GitHub Actions, bez vetvy `gh-pages` | V balíku sú adresy a súradnice odvodené z OSM, ktoré nemajú ísť do Gitu. Staré verzie po force-pushi by v Gite ostali dostupné. |
+| Názvy poskytovateľov | prvá verzia bez názvov (`[zverejnit] nazvy = false`) | LIA a informácia podľa čl. 14 GDPR nemajú právnu kontrolu (O12, O19, O21). Názvy sa zapnú až po nej. |
+| Interné texty | `CLAUDE.md` a Co-Authored-By ostávajú, v README je veta o vzniku s AI, história sa neprepisuje | otvorenosť |
+| Adresa | `https://lukashavrilak-code.github.io/kde-chybaju-lekari/` | účet autora, názov zodpovedá webu |
 
-## 2. Možnosti hostingu
+Autor vystupuje pod vlastným menom (O19), e-mail v commitoch je projektový (rozhodnutie z 28. 10. 2026).
 
-Web je statický (HTML, JSON, CSV), takže stačí ľubovoľný statický hosting. Podmienky bezplatných plánov treba pred výberom OVERIŤ.
+## 2. Ako funguje nasadenie
 
-| Možnosť | Adresa | Výhody | Nevýhody |
-|---|---|---|---|
-| **GitHub Pages** (odporúčané) | `<ucet>.github.io/<repozitar>/` | už pripravené (`python -m pipeline deploy`, `ghp-import`, vetva `gh-pages`), CI zadarmo, kód aj web na jednom mieste | verejný repozitár, servery v USA (O12), HTTP hlavičky sa nedajú nastaviť, CSP je iba v `<meta>` |
-| Cloudflare Pages | `<projekt>.pages.dev` | vlastné HTTP hlavičky (`_headers`), rýchla sieť | ďalší účet, iný postup nasadenia |
-| Netlify | `<projekt>.netlify.app` | `_headers`, jednoduché nahratie priečinka | limity bezplatného plánu, ďalší účet |
-| Codeberg Pages | `<ucet>.codeberg.page` | nezisková organizácia, servery v EÚ (lepšie pre O12) | menej známe, iný postup nasadenia |
+1. `python -m pipeline deploy` skontroluje `deploy_problems` (žiadne umelé dáta ani FAIL, čistý Git, commit odoslaný do `origin/main`, žiadne názvy) a zabalí `site/` do `build/site.tar.gz`.
+2. Balík nahrá do vydania `web-balik`, ktoré je vždy **draft**. Draft vidia iba ľudia s právom zápisu. Ak by `web-balik` nebol draft, nasadenie sa zastaví.
+3. Spustí workflow `.github/workflows/nasadenie.yml`, ktorý balík stiahne a nasadí na Pages. Artefakt workflow sa uchováva 1 deň.
 
-Odporúčanie: GitHub Pages. Ostatné možnosti sú záloha, ak by bol problém s O12 alebo s hlavičkami.
+V repozitári nie je žiadny token. `gh` sa prihlasuje cez `gh auth login`, workflow používa krátkodobý `GITHUB_TOKEN`.
 
-## 3. Čo treba pred prvým `git push`
+## 3. Prvé zverejnenie
 
-- **Autor commitov** je Lukas Havrilak, históriu netreba prepisovať.
-- **E-mail autora commitov** je projektový e-mail (rozhodnutie autora z 28. 10. 2026).
-- **`config.toml [projekt]`:** prevádzkovateľ je vyplnený, doplniť `web_url` a `repozitar_url`. Stránka 404 z `web_url` skladá absolútne odkazy, aby fungovala aj na vnorenej adrese (napr. `…/lekari/a/b`). Bez `web_url` `pipeline deploy` web nenasadí.
-- **Projektový e-mail** bude viditeľný na webe (Súkromie, Metodika).
-- `pipeline deploy` odmietne nasadiť web, ak niektorá stránka obsahuje `[DOPLŇ …]`.
+Jednorazovo:
 
-## 4. Kroky zverejnenia (keď autor rozhodne)
+1. GitHub: zapnúť dvojfaktorové overenie. V Settings → Emails pridať a overiť projektový e-mail, aby sa commity priradili k profilu. Voľbu „Block command line pushes that expose my email“ nechať vypnutú.
+2. `winget install GitHub.cli` a `gh auth login`.
 
-1. Kontrola histórie: `git log --all -p` neobsahuje názvy poskytovateľov z databázy. Spustiť `python scripts/check_repo.py`, `ruff check .` a `python -m pytest -q`.
-2. Vytvoriť verejný repozitár na GitHube a `git push`.
-3. Reálny beh pipeline podľa `docs/runbook.md` a `python -m pipeline deploy`.
-4. GitHub: Settings → Pages → vetva `gh-pages`, priečinok root.
-5. Prejsť kontrolný zoznam v `docs/sprievodca.md` (počítač aj telefón) na verejnej adrese.
+Postup:
 
-Vytvorenie verejného repozitára a nasadenie sa robí iba po výslovnom súhlase autora (`CLAUDE.md`).
+3. `python -m pytest -q`, `ruff check .`, `python scripts/check_repo.py`.
+4. `python -m pipeline skontroluj`. Ak je nový register, mesačná aktualizácia podľa runbooku.
+5. `gh repo create lukashavrilak-code/kde-chybaju-lekari --public --source . --push`.
+6. Počkať na zelené CI.
+7. Nastavenia repozitára:
+   - Pages: zdroj GitHub Actions,
+   - Actions: iba akcie od GitHubu, token iba na čítanie,
+   - Dependabot alerts, secret scanning, push protection, súkromné hlásenie zraniteľností,
+   - pravidlo pre `main`: zákaz force-push a zmazania,
+   - vypnúť Wiki a Projects.
+8. `python -m pipeline export` a kontrola náhľadu na počítači aj telefóne.
+9. `python -m pipeline deploy` a `gh run watch`.
+10. Kontrolný zoznam v `docs/runbook.md` na verejnej adrese.
+
+**Návrat späť:** Pages sa dajú vypnúť v nastaveniach repozitára a repozitár sa dá zmeniť na súkromný.
+
+## 4. Čo čakať
+
+- Web beží na HTTPS s platným certifikátom bez nastavovania. Nič nenačítava cez `http://`, nemá formuláre ani spustiteľné súbory.
+- GitHub Pages neumožňuje vlastné HTTP hlavičky, preto CSP je v `<meta>` a nástroje ako securityheaders.com dajú nízke hodnotenie. Návštevník to nevidí.
+- Limity: web najviac 1 GB (má asi 2 MB), mäkký limit 100 GB prenosu mesačne, nie na komerčné použitie.
 
 ## 5. Otvorené témy
 
 | Téma | Čo riešiť | Kde |
 |---|---|---|
-| Funkčnosť | kontrolný zoznam prehliadky (počítač a telefón) je celý nezaškrtnutý; 404 pri vnorenej ceste | `docs/sprievodca.md`, časť 1 |
-| Praktickosť | mesačná aktualizácia, upozornenie na staré dáta po 60 dňoch; adresy s presnosťou iba obec (`data/manual/geocode_overrides.csv` je prázdny); Plánovač úloh a cieľ zálohy | `docs/runbook.md`, O17 |
-| Legálnosť | O10 (podmienky OSM: dlaždice, Nominatim, ODbL), O12 (IP adresy do USA), licencia CSV vs. podmienky ÚDZS, LIA na kontrolu právnikom | `docs/overenia.md`, `docs/zdroje-a-licencie.md`, `docs/lia.md` |
-| Architektúra | voľba hostingu (časť 2), CSP v `<meta>` vs. HTTP hlavičky, nasadenie cez `ghp-import` vs. GitHub Actions, záložný geokóder (O13) | `pipeline/deploy.py`, `pipeline/site.py` |
-| Optimalizácia | `okresy.geojson` má 249 KB pri limite 250 KB (V6.2). Pred ďalším údajom o okresoch napr. `zjednodusenie_okresy_m` 250 → 300 | `config.toml` |
+| Právo | kontrola textov právnikom pred zapnutím názvov | O12, O19, O21, `docs/lia.md` |
+| Dáta | adresy s presnosťou iba obec, overenie významu útvaru NCZI a menovateľa T2.9 | `data/manual/geocode_overrides.csv`, O8, O13, O20 |
+| Údržba | mesačná aktualizácia, inak web po 60 dňoch ukáže upozornenie na staré dáta | `docs/runbook.md` |

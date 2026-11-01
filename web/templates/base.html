@@ -7,6 +7,22 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="Neoficiálna analýza verejných dát: dostupnosť všeobecných lekárov a pediatrov prvého kontaktu v okresoch a obciach Slovenska.">
 <title>{% block title %}{% endblock %}{{ projekt.nazov }}</title>
+{% if zaklad and stranka != "404.html" %}
+<link rel="canonical" href="{{ zaklad }}{{ "" if stranka == "index.html" else stranka }}">
+{% endif %}
+{% if zaklad %}
+<meta property="og:type" content="website">
+<meta property="og:locale" content="sk_SK">
+<meta property="og:title" content="{{ projekt.nazov }}">
+<meta property="og:description" content="Interaktívna mapa dostupnosti všeobecných lekárov a pediatrov v okresoch a obciach Slovenska. Neoficiálna analýza verejných dát.">
+<meta property="og:url" content="{{ zaklad }}">
+<meta property="og:image" content="{{ zaklad }}static/img/nahlad.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Mapa okresov Slovenska zafarbená podľa počtu ambulancií na 10 000 obyvateľov">
+<meta name="twitter:card" content="summary_large_image">
+{% endif %}
+<link rel="icon" href="{{ koren }}static/img/ikona.svg" type="image/svg+xml">
 <link rel="stylesheet" href="{{ koren }}static/css/style.css">
 {% block head %}{% endblock %}
 </head>
