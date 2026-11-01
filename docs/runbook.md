@@ -21,7 +21,7 @@ Príkaz `python -m pipeline skontroluj` iba pozrie stránku ÚDZS (1 požiadavka
 Úlohu vytvoríš raz v PowerShelli (spúšťa sa 3. deň v mesiaci o 9:00, ak si prihlásený):
 
 ```powershell
-schtasks /Create /SC MONTHLY /D 3 /ST 09:00 /TN "Lekari - kontrola registra" /TR "powershell -NoProfile -ExecutionPolicy Bypass -File D:\Lekari_data\scripts\skontroluj_register.ps1"
+schtasks /Create /SC MONTHLY /D 3 /ST 09:00 /TN "Lekari - kontrola registra" /TR "powershell -NoProfile -ExecutionPolicy Bypass -File <priečinok projektu>\scripts\skontroluj_register.ps1"
 $nastavenia = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 Set-ScheduledTask -TaskName "Lekari - kontrola registra" -Settings $nastavenia
 ```
@@ -61,10 +61,10 @@ Zoznam je v `config.toml [zaloha] polozky`. Cieľ je v `config.local.toml`:
 
 ```toml
 [zaloha]
-ciel = 'C:\Users\<používateľ>\OneDrive\Lekari_zaloha'
+ciel = 'E:\Lekari_zaloha'
 ```
 
-Na externý disk zmeň cestu, napr. `ciel = 'E:\Lekari_zaloha'`.
+Cieľ môže byť externý disk alebo priečinok cloudového úložiska.
 
 Príkaz `python -m pipeline zaloha` skopíruje nové a zmenené súbory. V cieli nič nemaže, takže tam ostanú aj staršie snapshoty. Úloha Plánovača úloh (pozri vyššie) ho spúšťa automaticky raz mesačne po kontrole registra. Ak cieľ nie je dostupný, napríklad keď nie je pripojený disk, zobrazí sa okno „Lekári – chyba zálohy“. Ručne kopírovať netreba.
 
