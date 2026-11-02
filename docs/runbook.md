@@ -64,7 +64,7 @@ Zoznam je v `config.toml [zaloha] polozky`. Cieľ je v `config.local.toml`:
 ciel = 'E:\Lekari_zaloha'
 ```
 
-Cieľ môže byť externý disk alebo priečinok cloudového úložiska.
+Cieľ môže byť externý disk alebo priečinok cloudového úložiska. Cloudové úložisko je príjemca údajov uvedený v `docs/sukromie.md`, pri zmene cieľa tento text skontroluj.
 
 Príkaz `python -m pipeline zaloha` skopíruje nové a zmenené súbory. V cieli nič nemaže, takže tam ostanú aj staršie snapshoty. Úloha Plánovača úloh (pozri vyššie) ho spúšťa automaticky raz mesačne po kontrole registra. Ak cieľ nie je dostupný, napríklad keď nie je pripojený disk, zobrazí sa okno „Lekári – chyba zálohy“. Ručne kopírovať netreba.
 
@@ -76,13 +76,13 @@ Postup pre verejnosť je v metodike (časť „Oprava alebo odstránenie záznam
 
 1. Do 2 pracovných dní potvrď prijatie. Žiadosť zapíš do `data/local/ziadosti_log.csv` (dátum, typ, čo sa urobilo, dátum vybavenia).
 2. Nájdi záznam: otvor `data/local/lekari.sqlite` (napr. v DB Browser for SQLite, keď pipeline nebeží) a vyhľadaj ho v pohľade `v_ambulancia` podľa adresy. Na jednej adrese môže byť viac kódov, skry iba ten, ktorého sa žiadosť týka.
-3. **Skrytie:** pridaj `pzs_kod` do `data/local/blocklist.csv` (stĺpce `pzs_kod,datum,typ_ziadosti`). **Chybná poloha:** pridaj riadok do `data/manual/geocode_overrides.csv`.
+3. **Skrytie:** pridaj `pzs_kod` do `data/local/blocklist.csv` (stĺpce `pzs_kod,datum,typ_ziadosti`). **Chybná poloha:** pridaj riadok do `data/manual/geocode_overrides.csv`. Ak V3.1 pri ďalšom behu hlási nenájdenú položku blocklistu, poskytovateľ mohol dostať nový kód. Vyhľadaj adresu v `v_ambulancia` a prípadný nový kód pridaj do blocklistu.
 4. Spusti `python -m pipeline clean`, `geocode`, `compute` a `export`, skontroluj web a nasaď (`deploy`). Netreba nič sťahovať.
 5. Odpovedz žiadateľovi do 5 pracovných dní. Ak je chyba v samotnom registri, uveď, že opravu treba žiadať aj u ÚDZS.
 
 ## Uchovávanie
 
-Snapshoty registra v `data/snapshots/udzs/` sú archív (mimo Gitu). Raz za štvrťrok zmaž snapshoty staršie ako 12 mesiacov aj s ich `.sha256`, **aj v cieli zálohy**, lebo `zaloha` v cieli nič nemaže a na webe sľubujeme najviac 12 mesiacov. V SQLite zmaž riadky tabuľky `ambulancia` pre staré snapshoty. Agregovaná história v `data/history/` (vrátane hashov snapshotov) ostáva.
+Snapshoty registra v `data/snapshots/udzs/` sú archív (mimo Gitu). Pri mesačnej aktualizácii zmaž snapshoty staršie ako 11 mesiacov aj s ich `.sha256`, **aj v cieli zálohy**, lebo `zaloha` v cieli nič nemaže a na webe sľubujeme najviac 12 mesiacov. V SQLite zmaž riadky tabuľky `ambulancia` pre staré snapshoty. Agregovaná história v `data/history/` (vrátane hashov snapshotov) ostáva.
 
 ## Kontrolný zoznam webu
 

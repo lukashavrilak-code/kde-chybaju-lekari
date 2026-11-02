@@ -56,6 +56,6 @@ Postup:
 
 | Téma | Čo riešiť | Kde |
 |---|---|---|
-| Právo | kontrola textov právnikom pred zapnutím názvov | O12, O19, O21, `docs/lia.md` |
+| Právo | kontrola textov právnikom pred zapnutím názvov | O12, O19, O21, O22, O23, `docs/lia.md` |
 | Dáta | adresy s presnosťou iba obec, overenie významu útvaru NCZI a menovateľa T2.9 | `data/manual/geocode_overrides.csv`, O8, O13, O20 |
 | Údržba | mesačná aktualizácia, inak web po 60 dňoch ukáže upozornenie na staré dáta | `docs/runbook.md` |
